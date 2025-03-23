@@ -1,9 +1,13 @@
 use anchor_lang::prelude::*;
 
 #[account]
-pub struct Market {
+#[derive(InitSpace)]
+pub struct ChauMarket {
+    #[max_len(30)]
     pub market_name: String,
+    #[max_len(150)]
     pub description: String,
+
     pub lsmr_b: u8,
     pub dead_line: i64, // unix_time_stamp
 
@@ -16,10 +20,9 @@ pub struct Market {
     pub mint_yes_bump: u8,
     pub mint_no_bump: u8,
     pub market_bump: u8,
-    pub market_seed: u8,
 }
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize)]
+#[derive(InitSpace, Clone, Copy, AnchorSerialize, AnchorDeserialize)]
 pub enum MarketStatus {
     Resolved, // The market has been resolved.
     Active,   // The market is still active (not resolved).
