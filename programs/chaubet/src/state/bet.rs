@@ -15,6 +15,7 @@ pub struct Bet {
     pub bettor_shares: u16,
     pub payout_amount: u16,
 
+    pub is_initialized: bool, // added this for safty check for reinitialization attackes
     pub bet_bump: u8,
 }
 

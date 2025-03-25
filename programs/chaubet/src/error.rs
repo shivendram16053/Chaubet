@@ -7,4 +7,10 @@ pub enum ChauError {
 
     #[msg("The admin already exist no need to sign again")]
     AdminExist,
+
+    #[msg("you are not authourized to do this instruction")]
+    UnAuthourized,
+
+    #[msg("This account is already initialized")]
+    AccountAlreadyInitialized,
 }

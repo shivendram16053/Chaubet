@@ -32,7 +32,6 @@ pub mod chaubet {
 
     pub fn create_market(ctx: Context<CreateMarket>, arg: MarketArg) -> Result<()> {
         ctx.accounts.save_market_data(ctx.bumps, arg)?;
-
         Ok(())
     }
 
@@ -42,6 +41,11 @@ pub mod chaubet {
     }
 
     pub fn sell_shares(ctx: Context<Initialize>) -> Result<()> {
+        msg!("Greetings from: {:?}", ctx.program_id);
+        Ok(())
+    }
+
+    pub fn parlay_bet(ctx: Context<Initialize>) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
     }

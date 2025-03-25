@@ -3,16 +3,10 @@ use anchor_spl::token_interface::{Mint, TokenInterface};
 
 use crate::{
     constant::{CHAU_CONFIG, MARKET, MINT_NO, MINT_YES},
+    error::ChauError,
     state::{ChauConfig, ChauMarket, MarketStatus},
     utils::helper::MarketArg,
 };
-
-// Accounts
-// - admin(signer)
-// - mint_yes
-// - mint_no
-// - chau_market
-// - chau_config
 
 #[derive(Accounts)]
 #[instruction(name:String)]
@@ -62,6 +56,15 @@ pub struct CreateMarket<'info> {
 
 impl<'info> CreateMarket<'info> {
     pub fn save_market_data(&mut self, bump: CreateMarketBumps, arg: MarketArg) -> Result<()> {
+        let check_admin = self
+            .chau_config
+            .admin
+            .iter()
+            .any(|admin_pubkey| self.admin.key() == *admin_pubkey);
+
+        // Check: Only authrized can create markets
+        require!(check_admin, ChauError::UnAuthourized);
+
         self.chau_market.set_inner(ChauMarket {
             market_name: arg.name,
             description: arg.description,
