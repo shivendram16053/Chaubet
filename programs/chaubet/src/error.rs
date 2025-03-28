@@ -13,4 +13,7 @@ pub enum ChauError {
 
     #[msg("This account is already initialized")]
     AccountAlreadyInitialized,
+
+    #[msg("Overflow Error occured")]
+    ArthmeticOverflow,
 }

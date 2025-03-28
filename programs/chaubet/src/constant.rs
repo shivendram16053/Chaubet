@@ -5,3 +5,4 @@ pub const MINT_NO: &[u8] = b"mint_no";
 pub const MARKET: &[u8] = b"market";
 pub const BETTOR: &[u8] = b"bettor_profile";
 pub const BETTOR_WALLET: &[u8] = b"bettor_wallet";
+pub const BET: &[u8] = b"bet";

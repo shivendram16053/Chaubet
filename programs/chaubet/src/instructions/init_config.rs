@@ -14,7 +14,7 @@ pub struct InitializeConfig<'info> {
     #[account(
         init_if_needed,
         payer = admin,
-        space = 8 + ChauConfig::INIT_SPACE,
+        space = ChauConfig::DISCRIMINATOR.len() + ChauConfig::INIT_SPACE,
         seeds = [CHAU_CONFIG],
         bump
     )]
@@ -47,6 +47,7 @@ impl<'info> InitializeConfig<'info> {
         self.chau_config.trasury_bump = bumps.treasury_account;
         self.chau_config.config_bump = bumps.chau_config;
         self.chau_config.admin.push(self.admin.key());
+        self.chau_config.treasuty_amount = 0;
 
         Ok(())
     }

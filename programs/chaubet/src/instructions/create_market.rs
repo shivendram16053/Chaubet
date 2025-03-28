@@ -24,7 +24,7 @@ pub struct CreateMarket<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + ChauMarket::INIT_SPACE,
+        space = ChauMarket::DISCRIMINATOR.len() + ChauMarket::INIT_SPACE,
         seeds = [MARKET, chau_config.key().to_bytes().as_ref(),name.as_bytes()],
         bump
     )]
@@ -33,7 +33,7 @@ pub struct CreateMarket<'info> {
     #[account(
         init,
         payer = admin,
-        seeds = [MINT_YES,chau_market.key().to_bytes().as_ref(), name.as_bytes()],
+        seeds = [MINT_YES,chau_market.key().to_bytes().as_ref()],
         bump,
         mint::authority = chau_config,
         mint::decimals = 0
@@ -43,7 +43,7 @@ pub struct CreateMarket<'info> {
     #[account(
             init,
             payer = admin,
-            seeds = [MINT_NO,chau_market.key().to_bytes().as_ref(), name.as_bytes()],
+            seeds = [MINT_NO,chau_market.key().to_bytes().as_ref()],
             bump,
             mint::authority = chau_config,
             mint::decimals = 0
