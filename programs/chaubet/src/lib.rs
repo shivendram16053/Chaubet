@@ -35,7 +35,7 @@ pub mod chaubet {
         Ok(())
     }
 
-    pub fn buy_shares(ctx: Context<Initialize>) -> Result<()> {
+    pub fn buy_shares(ctx: Context<BuyShares>) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
     }
@@ -57,6 +57,10 @@ pub mod chaubet {
 
     pub fn claim_better_amount(ctx: Context<Initialize>) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
+        Ok(())
+    }
+
+    pub fn close_market(ctx: Context<Initialize>) -> Result<()> {
         Ok(())
     }
 }

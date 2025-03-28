@@ -9,3 +9,9 @@ pub struct MarketArg {
     pub lmsr_b: u8,
     pub dead_line: i64,
 }
+
+// -------------- helper functions ------------
+
+pub fn calculate_buy_amount() -> u64 {
+    10
+}

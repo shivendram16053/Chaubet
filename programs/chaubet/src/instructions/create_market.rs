@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 
 use crate::{
-    constant::{CHAU_CONFIG, MARKET, MINT_NO, MINT_YES},
+    constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINT_NO, MINT_YES},
     error::ChauError,
     state::{ChauConfig, ChauMarket, MarketStatus},
     utils::helper::MarketArg,
@@ -50,6 +50,12 @@ pub struct CreateMarket<'info> {
         )]
     pub mint_no: InterfaceAccount<'info, Mint>,
 
+    #[account(
+        seeds = [MARKET_VAULT,chau_config.key().to_bytes().as_ref()],
+        bump
+    )]
+    pub market_vault_account: SystemAccount<'info>,
+
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -76,6 +82,7 @@ impl<'info> CreateMarket<'info> {
             mint_no_shares: 0,
             mint_yes_bump: bump.mint_yes,
             mint_no_bump: bump.mint_no,
+            market_vault_bump: bump.market_vault_account,
             market_bump: bump.chau_market,
         });
         Ok(())

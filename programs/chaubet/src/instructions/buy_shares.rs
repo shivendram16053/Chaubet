@@ -6,7 +6,7 @@ use anchor_spl::{
 
 use crate::{
     constant::*,
-    state::{Bet, ChauConfig, ChauMarket},
+    state::{chau_config, Bet, ChauConfig, ChauMarket},
 };
 // Context
 // - when bettor buys any mint_shares then, we should mint the tokens and update all required pdas
@@ -59,6 +59,12 @@ pub struct BuyShares<'info> {
     pub mint_no: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
+        seeds = [TREASURY,chau_config.key().to_bytes().as_ref()],
+        bump  = chau_market.market_vault_bump
+    )]
+    pub market_vault_account: SystemAccount<'info>,
+
+    #[account(
         init_if_needed,
         payer = bettor,
         space = Bet::DISCRIMINATOR.len() + Bet::INIT_SPACE,
@@ -86,4 +92,25 @@ pub struct BuyShares<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+}
+
+impl<'info> BuyShares<'info> {
+    pub fn buy_shares(
+        &mut self,
+        bumps: BuySharesBumps,
+        shares_amount: u64,
+        is_yes: bool,
+    ) -> Result<()> {
+        // calculate the amount of shares and save the Data
+
+        Ok(())
+    }
+    fn deposite_wager(amount: u64) -> Result<()> {
+        // transfer wager amount from bettor to vault account
+        Ok(())
+    }
+    fn send_shares(amount: u64, is_yes: bool) -> Result<()> {
+        // trasnfer shares to bettor token account
+        Ok(())
+    }
 }

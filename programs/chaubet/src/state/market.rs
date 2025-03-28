@@ -14,11 +14,12 @@ pub struct ChauMarket {
     pub market_state: MarketStatus,
     pub locked_bool: bool,
 
-    pub mint_yes_shares: u64,
-    pub mint_no_shares: u64,
+    pub mint_yes_shares: u64, // q1
+    pub mint_no_shares: u64,  // q2
 
     pub mint_yes_bump: u8,
     pub mint_no_bump: u8,
+    pub market_vault_bump: u8,
     pub market_bump: u8,
 }
 

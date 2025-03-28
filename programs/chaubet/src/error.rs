@@ -16,4 +16,7 @@ pub enum ChauError {
 
     #[msg("Overflow Error occured")]
     ArthmeticOverflow,
+
+    #[msg("Amount cannot be Zero")]
+    ZeroAmount,
 }
