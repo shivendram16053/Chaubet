@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 
 use crate::{
-    constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINT_NO, MINT_YES},
+    constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINIMUM_LMSR_B, MINT_NO, MINT_YES},
     error::ChauError,
     state::{ChauConfig, ChauMarket, MarketStatus},
     utils::helper::MarketArg,
@@ -71,13 +71,16 @@ impl<'info> CreateMarket<'info> {
         // Check: Only authrized can create markets
         require!(check_admin, ChauError::UnAuthourized);
 
+        // Check: The Liquidity Parameter should pass the minimum threshold
+        require_gte!(arg.lmsr_b, MINIMUM_LMSR_B, ChauError::ParameterTooLow);
+
         self.chau_market.set_inner(ChauMarket {
             market_name: arg.name,
             description: arg.description,
             lsmr_b: arg.lmsr_b,
             dead_line: arg.dead_line,
             market_state: MarketStatus::Active,
-            locked_bool: true,
+            is_locked: true,
             mint_yes_shares: 0,
             mint_no_shares: 0,
             mint_yes_bump: bump.mint_yes,

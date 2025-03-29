@@ -8,11 +8,11 @@ pub struct ChauMarket {
     #[max_len(150)]
     pub description: String,
 
-    pub lsmr_b: u8,
+    pub lsmr_b: u16,    // make sure b is higher (eg:- 100)
     pub dead_line: i64, // unix_time_stamp
 
     pub market_state: MarketStatus,
-    pub locked_bool: bool,
+    pub is_locked: bool,
 
     pub mint_yes_shares: u64, // q1
     pub mint_no_shares: u64,  // q2

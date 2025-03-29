@@ -6,12 +6,12 @@ use anchor_lang::prelude::*;
 pub struct MarketArg {
     pub name: String,
     pub description: String,
-    pub lmsr_b: u8,
+    pub lmsr_b: u16,
     pub dead_line: i64,
 }
 
 // -------------- helper functions ------------
-
-pub fn calculate_buy_amount() -> u64 {
-    10
-}
+// - calculate cost function
+// - calculate price function
+// - calculate liquidity function
+// - calculate market score function

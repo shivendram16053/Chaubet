@@ -10,6 +10,10 @@ pub mod utils;
 use instructions::*;
 use utils::helper::MarketArg;
 
+// - Add mpl-core for giving image for outcome tokens
+// - Check about Decimals in outcome tokens
+// - Implement Parlay betting feauture
+
 #[program]
 pub mod chaubet {
     use super::*;
@@ -61,6 +65,12 @@ pub mod chaubet {
     }
 
     pub fn close_market(ctx: Context<Initialize>) -> Result<()> {
+        // Should be done by admin
+        Ok(())
+    }
+
+    pub fn admin_withdraw_profit(ctx: Context<Initialize>) -> Result<()> {
+        // Should be Done by Admine
         Ok(())
     }
 }

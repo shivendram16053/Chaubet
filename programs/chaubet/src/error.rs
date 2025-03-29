@@ -5,6 +5,9 @@ pub enum ChauError {
     #[msg("Max Admin Lenght Exceeded")]
     ToManyAdmins,
 
+    #[msg("The liquidity parameter b is too low")]
+    ParameterTooLow,
+
     #[msg("The admin already exist no need to sign again")]
     AdminExist,
 

@@ -1,1 +1,7 @@
-// make some mathmatical macros(devision,check_zero,)
+// make some mathmatical macros(
+//    decimal_devision,
+//    check_zero,
+//    decimal_subtract_calciulation,
+//    decimal_addition_calciulation,
+//    decimal_multiplication_calciulation
+// )
