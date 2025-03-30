@@ -21,7 +21,7 @@ pub enum ChauError {
     ArthemeticOverflow,
 
     #[msg("Underflow Error occured")]
-    ArthemeticUnserflow,
+    ArthemeticUnderflow,
 
     #[msg("Mathmatical Error Occured")]
     ArthemeticError,

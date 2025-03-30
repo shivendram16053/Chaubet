@@ -10,9 +10,11 @@ pub mod utils;
 use instructions::*;
 use utils::helper::MarketArg;
 
-// - Add mpl-core for giving image for outcome tokens
+// - Add mpl-core for giving color to outcome tokens
 // - Check about Decimals in outcome tokens
 // - Implement Parlay betting feauture
+// - add price arg in market PDA
+// - maintain the flow between the LMSR struct and buy/sell instruction
 
 #[program]
 pub mod chaubet {

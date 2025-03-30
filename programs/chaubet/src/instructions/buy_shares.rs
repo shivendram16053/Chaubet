@@ -102,6 +102,7 @@ impl<'info> BuyShares<'info> {
         is_yes: bool,
     ) -> Result<()> {
         // calculate the amount of shares and save the Data
+        // initialize LMSR Struct(Decimal type)
 
         Ok(())
     }
