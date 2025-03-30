@@ -45,6 +45,7 @@ pub mod chaubet {
     }
 
     pub fn sell_shares(ctx: Context<Initialize>) -> Result<()> {
+        // Take expected amount
         msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
     }
@@ -61,6 +62,7 @@ pub mod chaubet {
 
     pub fn claim_better_amount(ctx: Context<Initialize>) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
+        // Make sure claim only happens after locked is false
         Ok(())
     }
 

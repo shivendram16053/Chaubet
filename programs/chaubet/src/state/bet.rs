@@ -8,12 +8,12 @@ pub struct Bet {
     pub bettor_pubkey: Pubkey,
     pub market_pubkey: Pubkey,
 
-    pub bet_amount: u64,
-    pub market_status: MarketStatus,
-    pub market_outcome: MarketOutcome,
+    pub bet_amount: u64,               // changable
+    pub market_status: MarketStatus,   // changable
+    pub market_outcome: MarketOutcome, // changable
 
-    pub bettor_shares: u16,
-    pub payout_amount: u16,
+    pub bettor_shares: u16, // changable
+    pub payout_amount: u16, // changable
 
     pub is_initialized: bool, // added this for safty check for reinitialization attackes
     pub bet_bump: u8,

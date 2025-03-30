@@ -54,7 +54,7 @@ pub struct CreateMarket<'info> {
         seeds = [MARKET_VAULT,chau_config.key().to_bytes().as_ref()],
         bump
     )]
-    pub market_vault_account: SystemAccount<'info>,
+    pub market_vault_account: SystemAccount<'info>, // Where bettor desposites there wagers
 
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,

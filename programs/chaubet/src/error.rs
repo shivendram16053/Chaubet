@@ -18,7 +18,13 @@ pub enum ChauError {
     AccountAlreadyInitialized,
 
     #[msg("Overflow Error occured")]
-    ArthmeticOverflow,
+    ArthemeticOverflow,
+
+    #[msg("Underflow Error occured")]
+    ArthemeticUnserflow,
+
+    #[msg("Mathmatical Error Occured")]
+    ArthemeticError,
 
     #[msg("Amount cannot be Zero")]
     ZeroAmount,
