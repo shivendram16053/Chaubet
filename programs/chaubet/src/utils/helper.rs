@@ -32,20 +32,20 @@ impl LMSR {
         }
     }
 
-    pub fn yes_shares(mut self, new_yes_shares: u64) -> Result<()> {
+    pub fn yes_shares(&mut self, new_yes_shares: u64) -> Result<()> {
         check_zero!([Decimal::from(new_yes_shares)]);
         self.outcome_yes_shares = Decimal::from(new_yes_shares);
         Ok(())
     }
 
-    pub fn no_shares(mut self, new_no_shares: u64) -> Result<()> {
+    pub fn no_shares(&mut self, new_no_shares: u64) -> Result<()> {
         check_zero!([Decimal::from(new_no_shares)]);
         self.outcome_no_shares = Decimal::from(new_no_shares);
         Ok(())
     }
 
     // price of outcome_yes_shares
-    pub fn price_calculation(self, is_yes: bool) -> Result<Decimal> {
+    pub fn price_calculation(&self, is_yes: bool) -> Result<Decimal> {
         // Check: check if the given inputs are zero
         check_zero!([self.outcome_yes_shares, self.outcome_no_shares]);
 
@@ -61,13 +61,13 @@ impl LMSR {
     }
 
     // cost calculation
-    pub fn cost_calculation(self) -> Result<Decimal> {
+    pub fn cost_calculation(&self, yes_shares: &Decimal, no_shares: &Decimal) -> Result<Decimal> {
         check_zero!([self.outcome_yes_shares, self.outcome_no_shares]);
 
         // cost function = b.ln(e.pow(q1/b) + e.pow(q2/b));
 
-        let outcome_yes = div!(self.outcome_yes_shares, self.lmsr_b).exp();
-        let outcome_no = div!(self.outcome_no_shares, self.lmsr_b).exp();
+        let outcome_yes = div!(yes_shares, self.lmsr_b).exp();
+        let outcome_no = div!(no_shares, self.lmsr_b).exp();
         let outcome_sum = add_or_sub!(outcome_yes, outcome_no, true)?;
 
         let cost = mul!(outcome_sum.ln(), self.lmsr_b);
@@ -76,31 +76,64 @@ impl LMSR {
     }
 
     // share calculation
-    pub fn share_calculation(self, is_buy: bool) -> Result<()> {
+    pub fn share_calculation(
+        &self,
+        is_buy: bool,
+        yes_shares: u64,
+        no_shares: u64,
+        fee_bps: u16,
+    ) -> Result<Decimal> {
         check_zero!([self.outcome_yes_shares, self.outcome_no_shares]);
-        // Delta C = C2 - C1;
+        // Delta C = C2 - C1;(New Cost Function - Current Cost Function)
 
         match is_buy {
             true => {
-                // C2 > C1
-                let c_one = self.cost_calculation()?;
+                // c2 > c1
+                let new_yes =
+                    add_or_sub!(self.outcome_yes_shares, Decimal::from(yes_shares), true)?;
+                let new_no = add_or_sub!(self.outcome_no_shares, Decimal::from(no_shares), true)?;
+
+                let current_cost =
+                    self.cost_calculation(&self.outcome_yes_shares, &self.outcome_no_shares)?;
+                let new_cost = self.cost_calculation(&new_yes, &new_no)?;
+
+                let delta_cost = add_or_sub!(new_cost, current_cost, false)?;
+
+                // calculating the fees
+                let fees = self.fees_calculation(fee_bps, delta_cost)?;
+
+                let share_cost = add_or_sub!(delta_cost, fees, true)?;
+
+                Ok(share_cost)
             }
             false => {
-                // C1 > C1
+                // c1 > c1
+                let new_yes =
+                    add_or_sub!(self.outcome_yes_shares, Decimal::from(yes_shares), false)?;
+                let new_no = add_or_sub!(self.outcome_no_shares, Decimal::from(no_shares), false)?;
+
+                let current_cost =
+                    self.cost_calculation(&self.outcome_yes_shares, &self.outcome_no_shares)?;
+                let new_cost = self.cost_calculation(&new_yes, &new_no)?;
+
+                let delta_cost = add_or_sub!(current_cost, new_cost, false)?;
+                Ok(delta_cost)
             }
         }
-
-        Ok(())
     }
 
     // fee calculation
-    pub fn fees_calculation(self) -> Result<()> {
+    pub fn fees_calculation(&self, fee_bps: u16, delta_cost: Decimal) -> Result<Decimal> {
         check_zero!([self.outcome_yes_shares, self.outcome_no_shares]);
+        require!(fee_bps < 10000 && fee_bps != 0, ChauError::InvalidFees);
 
-        Ok(())
+        let div_part = div!(Decimal::from(1), Decimal::from(10000));
+
+        let fee_pes = mul!(Decimal::from(fee_bps), div_part);
+        let fees = mul!(delta_cost, add_or_sub!(Decimal::from(1), fee_pes, false)?);
+
+        let net_fee = add_or_sub!(delta_cost, fees, false)?;
+
+        Ok(net_fee)
     }
 }
-
-// - calculate cost function
-// - calculate price function
-// - calculate fees based on payout and buy (fees will be 1% to 0.5%)

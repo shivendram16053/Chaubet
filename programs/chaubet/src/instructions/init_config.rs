@@ -32,7 +32,7 @@ pub struct InitializeConfig<'info> {
 impl<'info> InitializeConfig<'info> {
     pub fn init_config(&mut self, bumps: InitializeConfigBumps, fees: u16) -> Result<()> {
         // Checks for more the two admins
-        require!(self.chau_config.admin.len() <= 3, ChauError::ToManyAdmins);
+        require!(self.chau_config.admin.len() < 3, ChauError::ToManyAdmins);
 
         let admin_check = self
             .chau_config
@@ -41,7 +41,7 @@ impl<'info> InitializeConfig<'info> {
             .any(|admin_pubkey| admin_pubkey == self.admin.key);
 
         // Check if admin already exist
-        require!(admin_check, ChauError::AdminExist);
+        require!(!admin_check, ChauError::AdminExist);
 
         self.chau_config.fees = fees;
         self.chau_config.trasury_bump = bumps.treasury_account;

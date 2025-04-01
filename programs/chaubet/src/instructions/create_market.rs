@@ -5,7 +5,7 @@ use crate::{
     constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINIMUM_LMSR_B, MINT_NO, MINT_YES},
     error::ChauError,
     state::{ChauConfig, ChauMarket, MarketStatus},
-    utils::helper::MarketArg,
+    utils::helper::{MarketArg, LMSR},
 };
 
 #[derive(Accounts)]
@@ -88,6 +88,9 @@ impl<'info> CreateMarket<'info> {
             market_vault_bump: bump.market_vault_account,
             market_bump: bump.chau_market,
         });
+
+        // intialized the LMSR
+        LMSR::init_lmsr(arg.lmsr_b, 0, 0);
         Ok(())
     }
 }

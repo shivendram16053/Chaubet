@@ -28,4 +28,7 @@ pub enum ChauError {
 
     #[msg("Amount cannot be Zero")]
     ZeroAmount,
+
+    #[msg("The given fees is invalid")]
+    InvalidFees,
 }

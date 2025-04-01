@@ -112,6 +112,7 @@ impl<'info> BuyShares<'info> {
     }
     fn send_shares(amount: u64, is_yes: bool) -> Result<()> {
         // trasnfer shares to bettor token account
+        // update the LMSR Struct after transfering shars to bettor
         Ok(())
     }
 }
