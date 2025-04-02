@@ -1,5 +1,10 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    solana_program::native_token::LAMPORTS_PER_SOL,
+    system_program::{transfer, Transfer},
+};
 use anchor_spl::token_interface::{Mint, TokenInterface};
+use rust_decimal::prelude::*;
 
 use crate::{
     constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINIMUM_LMSR_B, MINT_NO, MINT_YES},
@@ -90,7 +95,45 @@ impl<'info> CreateMarket<'info> {
         });
 
         // intialized the LMSR
-        LMSR::init_lmsr(arg.lmsr_b, 0, 0);
+        let lmsr = LMSR::init_lmsr(arg.lmsr_b, 0, 0);
+        self.deposite_intial_amount(lmsr)?;
+
+        Ok(())
+    }
+
+    fn deposite_intial_amount(&self, lmsr: LMSR) -> Result<()> {
+        // Intialize Deposite for the market_vault_account
+
+        let accounts = Transfer {
+            from: self.admin.to_account_info(),
+            to: self.market_vault_account.to_account_info(),
+        };
+
+        let chau_config_seed = self.chau_config.key().to_bytes();
+        let seeds = &[MARKET_VAULT, chau_config_seed.as_ref()];
+
+        let signer_seeds = &[&seeds[..]];
+
+        let ctx = CpiContext::new_with_signer(
+            self.system_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
+
+        let decimal_amount =
+            lmsr.cost_calculation(&lmsr.outcome_yes_shares, &lmsr.outcome_no_shares)?;
+
+        let amount = decimal_amount.trunc().to_u64().unwrap_or(0);
+
+        // Checks for the intial deposite amount
+        require!(amount != 0, ChauError::ArthemeticError);
+        require!(
+            self.admin.to_account_info().lamports() > amount,
+            ChauError::NotEnoughAmount
+        );
+
+        transfer(ctx, amount * LAMPORTS_PER_SOL)?;
+
         Ok(())
     }
 }

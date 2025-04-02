@@ -4,10 +4,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::{
-    constant::*,
-    state::{chau_config, Bet, ChauConfig, ChauMarket},
-};
+use crate::{constant::*, state::*, utils::LMSR};
 // Context
 // - when bettor buys any mint_shares then, we should mint the tokens and update all required pdas
 //   only the bettor himself should initialize the pda and make sure there is no reinitialized
@@ -101,9 +98,28 @@ impl<'info> BuyShares<'info> {
         shares_amount: u64,
         is_yes: bool,
     ) -> Result<()> {
-        // calculate the amount of shares and save the Data
-        // initialize LMSR Struct(Decimal type)
+        // The Flow is :-
+        //
+        // User Buy Shares(amount,is_yes) --> we will save ccount data in the bet account -->
+        // calculate the cost of shares --> transfer the cost from bettor to vault account -->
+        // trensfer the shares to bettor token account --> update the LMSR struct with the new
+        // shares and cost --> update the bet account with the new shares and cost --> update the
+        // Market account with the new shares and cost
 
+        // save data
+        self.bet.set_inner(Bet {
+            bettor_pubkey: self.bettor.key(),
+            market_pubkey: self.chau_market.key(),
+            bet_amount: 0,
+            market_status: self.chau_market.market_state,
+            market_outcome: MarketOutcome::NotResolved,
+            bettor_shares: 0,
+            payout_amount: 0,
+            is_initialized: true,
+            bet_bump: bumps.bet,
+        });
+
+        // calculate the cost of given shares_amount
         Ok(())
     }
     fn deposite_wager(amount: u64) -> Result<()> {

@@ -13,8 +13,7 @@ use utils::helper::MarketArg;
 // - Add mpl-core for giving color to outcome  tokens
 // - Check about Decimals in outcome tokens
 // - Implement Parlay betting feauture
-// - add price arg in market PDA
-// - transfer funds for intializing market amount = b.ln(2);
+// - after resolve then update the bettor profit
 
 #[program]
 pub mod chaubet {
@@ -41,7 +40,7 @@ pub mod chaubet {
         Ok(())
     }
 
-    pub fn buy_shares(ctx: Context<BuyShares>) -> Result<()> {
+    pub fn buy_shares(ctx: Context<BuyShares>, share_amount: u64, is_buy: bool) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
     }

@@ -31,4 +31,7 @@ pub enum ChauError {
 
     #[msg("The given fees is invalid")]
     InvalidFees,
+
+    #[msg("The given user does not have requied SOL amount")]
+    NotEnoughAmount,
 }

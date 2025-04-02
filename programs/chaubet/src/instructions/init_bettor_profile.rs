@@ -4,9 +4,12 @@ use anchor_lang::{
     system_program::{transfer, Transfer},
     Result,
 };
+use rust_decimal::Decimal;
 
 use crate::{
+    check_zero,
     constant::{BETTOR, BETTOR_WALLET, CHAU_CONFIG},
+    error::ChauError,
     state::{Bettor, ChauConfig},
 };
 
@@ -69,6 +72,8 @@ impl<'info> InitializeBettor<'info> {
     fn transfer_bettor_funds(&mut self, amount_deposite: u64) -> Result<()> {
         // transer bettor funds to chua_wallet
 
+        check_zero!([Decimal::from(amount_deposite)]);
+
         let accounts = Transfer {
             from: self.bettor.to_account_info(),
             to: self.bettor_wallet_account.to_account_info(),
@@ -88,6 +93,12 @@ impl<'info> InitializeBettor<'info> {
         );
 
         transfer(ctx, amount_deposite * LAMPORTS_PER_SOL)?;
+
+        // update the bettor balance
+        self.bettor_profile
+            .balance
+            .checked_add(amount_deposite)
+            .unwrap();
         Ok(())
     }
 }
