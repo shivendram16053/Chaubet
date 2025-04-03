@@ -8,10 +8,18 @@ use rust_decimal::prelude::*;
 
 use crate::{
     constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINIMUM_LMSR_B, MINT_NO, MINT_YES},
+    decimal_convo,
     error::ChauError,
     state::{ChauConfig, ChauMarket, MarketStatus},
-    utils::helper::{MarketArg, LMSR},
 };
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct MarketArg {
+    pub name: String,
+    pub description: String,
+    pub lmsr_b: u64,
+    pub dead_line: i64,
+}
 
 #[derive(Accounts)]
 #[instruction(name:String)]
@@ -79,29 +87,28 @@ impl<'info> CreateMarket<'info> {
         // Check: The Liquidity Parameter should pass the minimum threshold
         require_gte!(arg.lmsr_b, MINIMUM_LMSR_B, ChauError::ParameterTooLow);
 
-        self.chau_market.set_inner(ChauMarket {
+        // intialized the LMSR
+        let lmsr = self.chau_market.init_chaumarket(ChauMarket {
             market_name: arg.name,
             description: arg.description,
             lsmr_b: arg.lmsr_b,
             dead_line: arg.dead_line,
             market_state: MarketStatus::Active,
             is_locked: true,
-            mint_yes_shares: 0,
-            mint_no_shares: 0,
+            outcome_yes_shares: 0,
+            outcome_no_shares: 0,
             mint_yes_bump: bump.mint_yes,
             mint_no_bump: bump.mint_no,
             market_vault_bump: bump.market_vault_account,
             market_bump: bump.chau_market,
         });
 
-        // intialized the LMSR
-        let lmsr = LMSR::init_lmsr(arg.lmsr_b, 0, 0);
         self.deposite_intial_amount(lmsr)?;
 
         Ok(())
     }
 
-    fn deposite_intial_amount(&self, lmsr: LMSR) -> Result<()> {
+    fn deposite_intial_amount(&self, lmsr: ChauMarket) -> Result<()> {
         // Intialize Deposite for the market_vault_account
 
         let accounts = Transfer {
@@ -110,7 +117,11 @@ impl<'info> CreateMarket<'info> {
         };
 
         let chau_config_seed = self.chau_config.key().to_bytes();
-        let seeds = &[MARKET_VAULT, chau_config_seed.as_ref()];
+        let seeds = &[
+            MARKET_VAULT,
+            chau_config_seed.as_ref(),
+            &[self.chau_market.market_vault_bump],
+        ];
 
         let signer_seeds = &[&seeds[..]];
 
@@ -120,8 +131,10 @@ impl<'info> CreateMarket<'info> {
             signer_seeds,
         );
 
-        let decimal_amount =
-            lmsr.cost_calculation(&lmsr.outcome_yes_shares, &lmsr.outcome_no_shares)?;
+        let decimal_amount = lmsr.cost_calculation(
+            &decimal_convo!(lmsr.outcome_yes_shares),
+            &decimal_convo!(lmsr.outcome_no_shares),
+        )?;
 
         let amount = decimal_amount.trunc().to_u64().unwrap_or(0);
 

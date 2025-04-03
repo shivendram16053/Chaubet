@@ -7,4 +7,4 @@ pub const MARKET_VAULT: &[u8] = b"market_vault";
 pub const BETTOR: &[u8] = b"bettor_profile";
 pub const BETTOR_WALLET: &[u8] = b"bettor_wallet";
 pub const BET: &[u8] = b"bet";
-pub const MINIMUM_LMSR_B: u16 = 1000;
+pub const MINIMUM_LMSR_B: u64 = 1000;

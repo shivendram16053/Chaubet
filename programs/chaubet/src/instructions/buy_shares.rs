@@ -1,26 +1,16 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    solana_program::native_token::LAMPORTS_PER_SOL,
+    system_program::{transfer, Transfer},
+};
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_interface::{mint_to_checked, Mint, MintToChecked, TokenAccount, TokenInterface},
 };
 
-use crate::{constant::*, state::*, utils::LMSR};
-// Context
-// - when bettor buys any mint_shares then, we should mint the tokens and update all required pdas
-//   only the bettor himself should initialize the pda and make sure there is no reinitialized
-//   attackes or lamport drain attackes
-//
-//  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//
-//  Accounts
-//  - bettor(Signer)
-//  - bet (PDA)-- init_if_needed
-//  - chau_config(PDA)
-//  - chau_market(PDA)
-//  - mint_yes
-//  - mint_no
-//  - bettor token_account(init_if_needed)
-//  - create bettor token_account for mint_yes and mint_no
+use rust_decimal::prelude::{Decimal, *};
+
+use crate::{check_zero, constant::*, decimal_convo, error::ChauError, state::*};
 
 #[derive(Accounts)]
 pub struct BuyShares<'info> {
@@ -98,13 +88,11 @@ impl<'info> BuyShares<'info> {
         shares_amount: u64,
         is_yes: bool,
     ) -> Result<()> {
-        // The Flow is :-
-        //
-        // User Buy Shares(amount,is_yes) --> we will save ccount data in the bet account -->
-        // calculate the cost of shares --> transfer the cost from bettor to vault account -->
-        // trensfer the shares to bettor token account --> update the LMSR struct with the new
-        // shares and cost --> update the bet account with the new shares and cost --> update the
-        // Market account with the new shares and cost
+        // Check: check for reintialization
+        require!(
+            !self.bet.is_initialized,
+            ChauError::AccountAlreadyInitialized
+        );
 
         // save data
         self.bet.set_inner(Bet {
@@ -114,21 +102,98 @@ impl<'info> BuyShares<'info> {
             market_status: self.chau_market.market_state,
             market_outcome: MarketOutcome::NotResolved,
             bettor_shares: 0,
-            payout_amount: 0,
             is_initialized: true,
             bet_bump: bumps.bet,
         });
 
+        check_zero!([decimal_convo!(shares_amount)]);
+
         // calculate the cost of given shares_amount
+        let share_cost = match is_yes {
+            true => self
+                .chau_market
+                .share_calculation(true, shares_amount, 0, self.chau_config.fees)?
+                .to_u64()
+                .unwrap(),
+
+            false => self
+                .chau_market
+                .share_calculation(true, 0, shares_amount, self.chau_config.fees)?
+                .to_u64()
+                .unwrap(),
+        };
+
+        self.deposite_wager(shares_amount)?;
+        self.send_shares(shares_amount, is_yes)?;
+        self.update_all_state(shares_amount, share_cost, is_yes)?;
+
         Ok(())
     }
-    fn deposite_wager(amount: u64) -> Result<()> {
-        // transfer wager amount from bettor to vault account
+
+    fn deposite_wager(&mut self, amount: u64) -> Result<()> {
+        // transfer wager amount from bettor to vault Accounts
+
+        let accounts = Transfer {
+            from: self.bettor.to_account_info(),
+            to: self.market_vault_account.to_account_info(),
+        };
+
+        let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
+
+        transfer(ctx, amount * LAMPORTS_PER_SOL)?;
         Ok(())
     }
-    fn send_shares(amount: u64, is_yes: bool) -> Result<()> {
-        // trasnfer shares to bettor token account
-        // update the LMSR Struct after transfering shars to bettor
+
+    fn send_shares(&mut self, share_amount: u64, is_yes: bool) -> Result<()> {
+        // trasnfer shares to bettor token Accounts
+
+        let (to, mint) = match is_yes {
+            true => (&self.bettor_yes_account, &self.mint_yes),
+            false => (&self.bettor_no_account, &self.mint_no),
+        };
+
+        let accounts = MintToChecked {
+            to: to.to_account_info(),
+            authority: self.chau_config.to_account_info(),
+            mint: mint.to_account_info(),
+        };
+
+        let seeds = &[CHAU_CONFIG, &[self.chau_config.config_bump]];
+        let signer_seeds = &[&seeds[..]];
+
+        let ctx = CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
+
+        mint_to_checked(ctx, share_amount, mint.decimals)?;
+        Ok(())
+    }
+
+    fn update_all_state(&mut self, share_amount: u64, bet_amount: u64, is_yes: bool) -> Result<()> {
+        // update the LMSR Struct after transfering shars to bettor_pubkey
+        // - Bet
+        // - Market
+
+        // update the bet account
+        self.bet.bet_amount.checked_add(bet_amount).unwrap();
+        self.bet.bettor_shares.checked_add(share_amount).unwrap();
+
+        // update the market account
+
+        if is_yes {
+            self.chau_market
+                .outcome_yes_shares
+                .checked_add(share_amount)
+                .unwrap();
+        } else {
+            self.chau_market
+                .outcome_no_shares
+                .checked_add(share_amount)
+                .unwrap();
+        }
+
         Ok(())
     }
 }

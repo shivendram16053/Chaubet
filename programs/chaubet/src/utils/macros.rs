@@ -43,3 +43,10 @@ macro_rules! mul {
         }
     };
 }
+
+#[macro_export]
+macro_rules! decimal_convo {
+    ($value:expr) => {
+        Decimal::from($value)
+    };
+}

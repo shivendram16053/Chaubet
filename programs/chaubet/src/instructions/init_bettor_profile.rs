@@ -79,18 +79,7 @@ impl<'info> InitializeBettor<'info> {
             to: self.bettor_wallet_account.to_account_info(),
         };
 
-        let bettor_seed = self.bettor.key().to_bytes();
-        let chau_config = self.chau_config.key().to_bytes();
-
-        let seeds = &[BETTOR_WALLET, bettor_seed.as_ref(), chau_config.as_ref()];
-
-        let signer_seeds = &[&seeds[..]];
-
-        let ctx = CpiContext::new_with_signer(
-            self.system_program.to_account_info(),
-            accounts,
-            signer_seeds,
-        );
+        let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
 
         transfer(ctx, amount_deposite * LAMPORTS_PER_SOL)?;
 
