@@ -9,10 +9,10 @@ pub mod utils;
 
 use instructions::*;
 
-// - Add mpl-core for giving color to outcome  tokens
 // - Check about Decimals in outcome tokens
 // - Implement Parlay betting feauture
 // - after resolve then update the bettor profit
+// - Implement the net profit of bettor algo perfectly
 
 #[program]
 pub mod chaubet {
@@ -39,14 +39,14 @@ pub mod chaubet {
         Ok(())
     }
 
-    pub fn buy_shares(ctx: Context<BuyShares>, share_amount: u64, is_buy: bool) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
+    pub fn buy_shares(ctx: Context<BuyShares>, shares_amount: u64, is_yes: bool) -> Result<()> {
+        ctx.accounts.buy_shares(ctx.bumps, shares_amount, is_yes)?;
         Ok(())
     }
 
-    pub fn sell_shares(ctx: Context<Initialize>) -> Result<()> {
+    pub fn sell_shares(ctx: Context<SellShares>, shares_amount: u64, is_yes: bool) -> Result<()> {
         // Take expected amount
-        msg!("Greetings from: {:?}", ctx.program_id);
+        ctx.accounts.sell_shares(shares_amount, is_yes)?;
         Ok(())
     }
 
@@ -73,6 +73,11 @@ pub mod chaubet {
 
     pub fn admin_withdraw_profit(ctx: Context<Initialize>) -> Result<()> {
         // Should be Done by Admine
+        Ok(())
+    }
+
+    pub fn ban_bettor(ctx: Context<Initialize>) -> Result<()> {
+        // Only Done by the admin of this Platform
         Ok(())
     }
 }

@@ -46,6 +46,7 @@ pub struct BuyShares<'info> {
     pub mint_no: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
+        mut,
         seeds = [TREASURY,chau_config.key().to_bytes().as_ref()],
         bump  = chau_market.market_vault_bump
     )]
@@ -172,16 +173,13 @@ impl<'info> BuyShares<'info> {
     }
 
     fn update_all_state(&mut self, share_amount: u64, bet_amount: u64, is_yes: bool) -> Result<()> {
-        // update the LMSR Struct after transfering shars to bettor_pubkey
-        // - Bet
-        // - Market
+        // update after transfering shars to bettor_pubkey
 
         // update the bet account
         self.bet.bet_amount.checked_add(bet_amount).unwrap();
         self.bet.bettor_shares.checked_add(share_amount).unwrap();
 
         // update the market account
-
         if is_yes {
             self.chau_market
                 .outcome_yes_shares
