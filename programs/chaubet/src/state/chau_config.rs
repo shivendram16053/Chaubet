@@ -10,4 +10,5 @@ pub struct ChauConfig {
     pub treasuty_amount: u64,
     pub trasury_bump: u8,
     pub config_bump: u8,
+    pub is_initialized: bool,
 }

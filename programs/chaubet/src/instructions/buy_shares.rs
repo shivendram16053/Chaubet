@@ -10,12 +10,37 @@ use anchor_spl::{
 
 use rust_decimal::prelude::{Decimal, *};
 
-use crate::{check_zero, constant::*, decimal_convo, error::ChauError, state::*};
+use crate::{check_ban, check_zero, constant::*, decimal_convo, error::ChauError, state::*};
 
 #[derive(Accounts)]
 pub struct BuyShares<'info> {
     #[account(mut)]
     pub bettor: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [BETTOR_PROFILE,bettor.key().to_bytes().as_ref(),chau_config.key().to_bytes().as_ref()],
+        bump = bettor_profile.bettor_bump,
+
+        constraint = bettor_profile.bettor_pubkey == bettor.key() @ ChauError::InvalidAccount
+    )]
+    pub bettor_profile: Account<'info, Bettor>,
+
+    #[account(
+        init_if_needed,
+        payer = bettor,
+        space = Wager::DISCRIMINATOR.len() + Wager::INIT_SPACE,
+        seeds = [WAGER,chau_market.key().to_bytes().as_ref(),bettor.key().to_bytes().as_ref()],
+        bump
+    )]
+    pub wager_account: Account<'info, Wager>,
+
+    #[account(
+        mut,
+        seeds = [BETTOR_WALLET,bettor.key().to_bytes().as_ref(), chau_config.key().to_bytes().as_ref()],
+        bump = bettor_profile.bettor_vault_bump
+    )]
+    pub bettor_wallet_account: SystemAccount<'info>,
 
     #[account(
         mut,
@@ -26,7 +51,7 @@ pub struct BuyShares<'info> {
 
     #[account(
         mut,
-        seeds = [MARKET, chau_config.key().to_bytes().as_ref()],
+        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),chau_market.market_name.as_bytes()],
         bump = chau_market.market_bump
     )]
     pub chau_market: Account<'info, ChauMarket>,
@@ -35,31 +60,24 @@ pub struct BuyShares<'info> {
         mut,
         seeds = [MINT_YES,chau_market.key().to_bytes().as_ref()],
         bump = chau_market.mint_yes_bump,
+        mint::authority = chau_config,
     )]
     pub mint_yes: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         seeds = [MINT_NO,chau_market.key().to_bytes().as_ref()],
-        bump = chau_market.mint_no_bump
+        bump = chau_market.mint_no_bump,
+        mint::authority = chau_config,
     )]
     pub mint_no: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
-        seeds = [TREASURY,chau_config.key().to_bytes().as_ref()],
+        seeds = [MARKET_VAULT,chau_market.key().to_bytes().as_ref()],
         bump  = chau_market.market_vault_bump
     )]
     pub market_vault_account: SystemAccount<'info>,
-
-    #[account(
-        init_if_needed,
-        payer = bettor,
-        space = Bet::DISCRIMINATOR.len() + Bet::INIT_SPACE,
-        seeds = [BET,chau_market.key().to_bytes().as_ref()],
-        bump
-    )]
-    pub bet: Account<'info, Bet>,
 
     #[account(
         init_if_needed,
@@ -89,57 +107,84 @@ impl<'info> BuyShares<'info> {
         shares_amount: u64,
         is_yes: bool,
     ) -> Result<()> {
-        // Check: check for reintialization
-        require!(
-            !self.bet.is_initialized,
-            ChauError::AccountAlreadyInitialized
-        );
+        check_ban!(self.bettor_profile.is_ban);
 
-        // save data
-        self.bet.set_inner(Bet {
-            bettor_pubkey: self.bettor.key(),
-            market_pubkey: self.chau_market.key(),
-            bet_amount: 0,
-            market_status: self.chau_market.market_state,
-            market_outcome: MarketOutcome::NotResolved,
-            bettor_shares: 0,
-            is_initialized: true,
-            bet_bump: bumps.bet,
-        });
+        match self.chau_market.market_state {
+            MarketStatus::Active => {
+                // save data
+                if !self.wager_account.is_initialized {
+                    self.wager_account.set_inner(Wager {
+                        bettor_pubkey: self.bettor.key(),
+                        market_pubkey: self.chau_market.key(),
+                        bet_amount_spent: 0,
+                        bet_amount_earned: 0,
+                        market_status: self.chau_market.market_state,
+                        market_outcome: MarketOutcome::NotResolved,
+                        yes_shares: 0,
+                        no_shares: 0,
+                        is_initialized: true,
+                        bet_bump: bumps.wager_account,
+                    });
+                }
 
-        check_zero!([decimal_convo!(shares_amount)]);
+                check_zero!([decimal_convo!(shares_amount)]);
 
-        // calculate the cost of given shares_amount
-        let share_cost = match is_yes {
-            true => self
-                .chau_market
-                .share_calculation(true, shares_amount, 0, self.chau_config.fees)?
-                .to_u64()
-                .unwrap(),
+                // calculate the cost of given shares_amount
+                let share_cost = match is_yes {
+                    true => self
+                        .chau_market
+                        .share_calculation(true, shares_amount, 0, self.chau_config.fees)?
+                        .to_u64()
+                        .ok_or(ChauError::ArthemeticError)?,
 
-            false => self
-                .chau_market
-                .share_calculation(true, 0, shares_amount, self.chau_config.fees)?
-                .to_u64()
-                .unwrap(),
-        };
+                    false => self
+                        .chau_market
+                        .share_calculation(true, 0, shares_amount, self.chau_config.fees)?
+                        .to_u64()
+                        .ok_or(ChauError::ArthemeticError)?,
+                };
 
-        self.deposite_wager(shares_amount)?;
-        self.send_shares(shares_amount, is_yes)?;
-        self.update_all_state(shares_amount, share_cost, is_yes)?;
+                self.deposite_wager(share_cost)?;
+                self.send_shares(shares_amount, is_yes)?;
+                self.update_all_state(shares_amount, share_cost, is_yes)?;
+            }
+            MarketStatus::Resolved => {
+                return Err(error!(ChauError::MarketGotResolved));
+            }
+        }
 
         Ok(())
     }
 
     fn deposite_wager(&mut self, amount: u64) -> Result<()> {
-        // transfer wager amount from bettor to vault Accounts
+        // transfer wager amount from bettor wallet to vault Accounts
+
+        require!(
+            self.bettor_wallet_account.lamports() >= amount,
+            ChauError::NotEnoughAmount
+        );
 
         let accounts = Transfer {
-            from: self.bettor.to_account_info(),
+            from: self.bettor_wallet_account.to_account_info(),
             to: self.market_vault_account.to_account_info(),
         };
 
-        let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
+        let bettor_seeds = self.bettor.key().to_bytes();
+        let chau_config_seeds = self.chau_config.key().to_bytes();
+        let seeds = &[
+            BETTOR_WALLET,
+            bettor_seeds.as_ref(),
+            chau_config_seeds.as_ref(),
+            &[self.bettor_profile.bettor_vault_bump],
+        ];
+
+        let signer_seeds = &[&seeds[..]];
+
+        let ctx = CpiContext::new_with_signer(
+            self.system_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
 
         transfer(ctx, amount * LAMPORTS_PER_SOL)?;
         Ok(())
@@ -175,22 +220,36 @@ impl<'info> BuyShares<'info> {
     fn update_all_state(&mut self, share_amount: u64, bet_amount: u64, is_yes: bool) -> Result<()> {
         // update after transfering shars to bettor_pubkey
 
-        // update the bet account
-        self.bet.bet_amount.checked_add(bet_amount).unwrap();
-        self.bet.bettor_shares.checked_add(share_amount).unwrap();
-
-        // update the market account
         if is_yes {
+            // update the bet account
+            self.wager_account
+                .yes_shares
+                .checked_add(share_amount)
+                .ok_or(ChauError::ArthemeticOverflow)?;
+
+            // update the market account
             self.chau_market
                 .outcome_yes_shares
                 .checked_add(share_amount)
-                .unwrap();
+                .ok_or(ChauError::ArthemeticOverflow)?;
         } else {
+            // update the bet account
+            self.wager_account
+                .no_shares
+                .checked_add(share_amount)
+                .ok_or(ChauError::ArthemeticOverflow)?;
+
+            // update the market account
             self.chau_market
                 .outcome_no_shares
                 .checked_add(share_amount)
-                .unwrap();
+                .ok_or(ChauError::ArthemeticOverflow)?;
         }
+
+        self.wager_account
+            .bet_amount_spent
+            .checked_add(bet_amount)
+            .unwrap();
 
         Ok(())
     }

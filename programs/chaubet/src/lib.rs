@@ -9,16 +9,14 @@ pub mod utils;
 
 use instructions::*;
 
-// - Check about Decimals in outcome tokens
 // - Implement Parlay betting feauture
-// - after resolve then update the bettor profit
-// - Implement the net profit of bettor algo perfectly
 
 #[program]
 pub mod chaubet {
+
     use super::*;
 
-    pub fn initialize_config(ctx: Context<InitializeConfig>, fees: u16) -> Result<()> {
+    pub fn initialize_config(ctx: Context<InitializeConfig>, fees: Option<u16>) -> Result<()> {
         ctx.accounts.init_config(ctx.bumps, fees)?;
         Ok(())
     }
@@ -51,33 +49,32 @@ pub mod chaubet {
     }
 
     pub fn parlay_bet(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
     }
 
-    pub fn resolve_market(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
+    pub fn resolve_market(ctx: Context<Resolve>, outcome: state::MarketOutcome) -> Result<()> {
+        ctx.accounts.resolve_market(outcome)?;
         Ok(())
     }
 
-    pub fn claim_better_amount(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
-        // Make sure claim only happens after locked is false
+    pub fn claim_bettor_amount(ctx: Context<ClaimAmount>, shares_amount: u64) -> Result<()> {
+        // Make sure claim only happens after Resolve
+        ctx.accounts.claim_amount(shares_amount)?;
         Ok(())
     }
 
-    pub fn close_market(ctx: Context<Initialize>) -> Result<()> {
-        // Should be done by admin
+    pub fn admin_withdraw_profit(ctx: Context<AdminWithdraw>) -> Result<()> {
+        ctx.accounts.admin_withdraw_revenue()?;
         Ok(())
     }
 
-    pub fn admin_withdraw_profit(ctx: Context<Initialize>) -> Result<()> {
-        // Should be Done by Admine
+    pub fn bettor_withdraw_amount(ctx: Context<BettorWithdraw>) -> Result<()> {
+        ctx.accounts.bettor_withdraw()?;
         Ok(())
     }
 
-    pub fn ban_bettor(ctx: Context<Initialize>) -> Result<()> {
-        // Only Done by the admin of this Platform
+    pub fn ban_bettor(ctx: Context<Ban>) -> Result<()> {
+        ctx.accounts.ban_bettor()?;
         Ok(())
     }
 }

@@ -1,7 +1,9 @@
 use crate::error::ChauError;
-use crate::{add_or_sub, check_zero, decimal_convo, div, mul};
+use crate::{add_or_sub, decimal_convo, div, mul};
 use anchor_lang::prelude::*;
 use rust_decimal::prelude::{Decimal, *};
+
+use super::MarketOutcome;
 
 #[account]
 #[derive(InitSpace)]
@@ -15,7 +17,7 @@ pub struct ChauMarket {
     pub dead_line: i64, // unix_time_stamp
 
     pub market_state: MarketStatus,
-    pub is_locked: bool,
+    pub market_outcome: MarketOutcome, // changable
 
     pub outcome_yes_shares: u64, // q1
     pub outcome_no_shares: u64,  // q2
@@ -27,6 +29,7 @@ pub struct ChauMarket {
 }
 
 #[derive(InitSpace, Clone, Copy, AnchorSerialize, AnchorDeserialize)]
+#[repr(u8)]
 pub enum MarketStatus {
     Resolved, // The market has been resolved.
     Active,   // The market is still active (not resolved).
@@ -38,12 +41,20 @@ impl ChauMarket {
         Self {
             market_name: arg.market_name,
             description: arg.description,
+
+            // LMSR liquidity
             lsmr_b: arg.lsmr_b,
             dead_line: arg.dead_line,
+
+            // market state
             market_state: arg.market_state,
-            is_locked: arg.is_locked,
+            market_outcome: arg.market_outcome,
+
+            // shares
             outcome_yes_shares: arg.outcome_yes_shares,
             outcome_no_shares: arg.outcome_no_shares,
+
+            // bumps
             mint_yes_bump: arg.mint_yes_bump,
             mint_no_bump: arg.mint_no_bump,
             market_vault_bump: arg.market_vault_bump,
@@ -53,12 +64,6 @@ impl ChauMarket {
 
     // price of outcome_yes_shares
     pub fn price_calculation(&self, is_yes: bool) -> Result<Decimal> {
-        // Check: check if the given inputs are zero
-        check_zero!([
-            decimal_convo!(self.outcome_yes_shares),
-            decimal_convo!(self.outcome_no_shares)
-        ]);
-
         let pow_yes = div!(
             decimal_convo!(self.outcome_yes_shares),
             decimal_convo!(self.lsmr_b)
@@ -81,10 +86,6 @@ impl ChauMarket {
 
     // cost calculation
     pub fn cost_calculation(&self, yes_shares: &Decimal, no_shares: &Decimal) -> Result<Decimal> {
-        check_zero!([
-            decimal_convo!(self.outcome_yes_shares),
-            decimal_convo!(self.outcome_no_shares)
-        ]);
         // cost function = b.ln(e.pow(q1/b) + e.pow(q2/b));
 
         let outcome_yes = div!(yes_shares, decimal_convo!(Decimal::from(self.lsmr_b))).exp(); // e.pow(q1/b)
@@ -104,16 +105,13 @@ impl ChauMarket {
         no_shares: u64,
         fee_bps: u16,
     ) -> Result<Decimal> {
-        check_zero!([
-            decimal_convo!(self.outcome_yes_shares),
-            decimal_convo!(self.outcome_no_shares)
-        ]);
         // Delta C = C2 - C1;(New Cost Function - Current Cost Function)
         let current_cost = self.cost_calculation(
             &decimal_convo!(self.outcome_yes_shares),
             &decimal_convo!(self.outcome_no_shares),
         )?;
 
+        // q2 + q1(for buying) & q2 - q1 (for selling)
         let new_yes = add_or_sub!(
             decimal_convo!(self.outcome_yes_shares),
             decimal_convo!(yes_shares),

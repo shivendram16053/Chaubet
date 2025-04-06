@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[error_code]
 pub enum ChauError {
     #[msg("Max Admin Lenght Exceeded")]
-    ToManyAdmins,
+    TooManyAdmins,
 
     #[msg("The liquidity parameter b is too low")]
     ParameterTooLow,
@@ -34,4 +34,22 @@ pub enum ChauError {
 
     #[msg("The given user does not have requied SOL amount")]
     NotEnoughAmount,
+
+    #[msg("You cannot particpate in this market it got resolved")]
+    MarketGotResolved,
+
+    #[msg("Your bettor wallet got banned you cannot performe any actions using this account")]
+    Banned,
+
+    #[msg("Market is not resolved")]
+    MarketNotResolved,
+
+    #[msg("You dont have enough shares to claim")]
+    NotEnoughShares,
+
+    #[msg("The given account is invalid")]
+    InvalidAccount,
+
+    #[msg("Trying to resolve before market is ended")]
+    MarketNotEnded,
 }

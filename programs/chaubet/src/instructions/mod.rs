@@ -1,3 +1,6 @@
+pub mod admin_withdraw;
+pub mod ban_bettor;
+pub mod bettor_withdraw;
 pub mod buy_shares;
 pub mod claim_amount;
 pub mod create_market;
@@ -6,6 +9,9 @@ pub mod init_config;
 pub mod resolve;
 pub mod sell_shares;
 
+pub use admin_withdraw::*;
+pub use ban_bettor::*;
+pub use bettor_withdraw::*;
 pub use buy_shares::*;
 pub use claim_amount::*;
 pub use create_market::*;

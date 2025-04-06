@@ -50,3 +50,27 @@ macro_rules! decimal_convo {
         Decimal::from($value)
     };
 }
+
+#[macro_export]
+macro_rules! check_ban {
+    ($ban:expr) => {
+        if $ban {
+            return err!(ChauError::Banned);
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! admin_check {
+    ($self:expr) => {
+        let admin_check = $self
+            .chau_config
+            .admin
+            .iter()
+            .any(|admin_pubkey| $self.admin.key() == *admin_pubkey);
+
+        if !admin_check {
+            return err!(ChauError::UnAuthourized);
+        }
+    };
+}

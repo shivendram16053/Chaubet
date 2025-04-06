@@ -12,7 +12,6 @@ pub struct Bettor {
 
     pub is_ban: bool, // Ban those bettors who voilate the platform rules
 
-    // pub markets_traded: Vec<Pubkey>, // I will reallocation for evry new market bets
     pub bettor_vault_bump: u8,
     pub bettor_bump: u8,
 }

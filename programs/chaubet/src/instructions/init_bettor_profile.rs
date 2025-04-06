@@ -8,7 +8,7 @@ use rust_decimal::Decimal;
 
 use crate::{
     check_zero,
-    constant::{BETTOR, BETTOR_WALLET, CHAU_CONFIG},
+    constant::*,
     error::ChauError,
     state::{Bettor, ChauConfig},
 };
@@ -28,8 +28,8 @@ pub struct InitializeBettor<'info> {
     #[account(
         init,
         payer = bettor,
-        space = 8 + Bettor::INIT_SPACE,
-        seeds = [BETTOR,bettor.key().to_bytes().as_ref(),chau_config.key().to_bytes().as_ref()],
+        space = Bettor::DISCRIMINATOR.len() + Bettor::INIT_SPACE,
+        seeds = [BETTOR_PROFILE,bettor.key().to_bytes().as_ref(),chau_config.key().to_bytes().as_ref()],
         bump
     )]
     pub bettor_profile: Account<'info, Bettor>,
