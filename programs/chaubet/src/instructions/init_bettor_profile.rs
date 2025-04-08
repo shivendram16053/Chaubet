@@ -52,8 +52,6 @@ impl<'info> InitializeBettor<'info> {
         bumps: InitializeBettorBumps,
     ) -> Result<()> {
         // save the user data
-        // transfer bettor fundes to program Accounts
-
         self.bettor_profile.set_inner(Bettor {
             bettor_pubkey: self.bettor.key(),
             bettor_name: name,

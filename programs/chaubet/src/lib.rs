@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8PXHZ4Y6noy89qMEVBhGgeLGFuMzkP1QXFwBTAsRD2Hd");
+declare_id!("8pxhz4y6noy89qmevbhggelgfumzkp1qxfwbtasrd2hd");
 pub mod constant;
 pub mod error;
 pub mod instructions;
@@ -10,6 +10,8 @@ pub mod utils;
 use instructions::*;
 
 // - Implement Parlay betting feauture
+// - Integrate the switchboard Oracle
+// - If possible try to color the outcomes
 
 #[program]
 pub mod chaubet {
@@ -48,9 +50,9 @@ pub mod chaubet {
         Ok(())
     }
 
-    pub fn parlay_bet(ctx: Context<Initialize>) -> Result<()> {
-        Ok(())
-    }
+    // pub fn parlay_bet(ctx: Context<Initialize>) -> Result<()> {
+    //     Ok(())
+    // }
 
     pub fn resolve_market(ctx: Context<Resolve>, outcome: state::MarketOutcome) -> Result<()> {
         ctx.accounts.resolve_market(outcome)?;
@@ -78,6 +80,3 @@ pub mod chaubet {
         Ok(())
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}

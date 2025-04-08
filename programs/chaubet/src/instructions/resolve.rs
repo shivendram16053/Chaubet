@@ -2,12 +2,6 @@ use anchor_lang::prelude::*;
 
 use crate::{admin_check, constant::*, error::ChauError, state::*};
 
-// Context:- Resolve the market by using the Oracle
-//  1) Check if the person who is invoking this instruction is the admin
-//  2) Check if the given market is resolved or not (by using is_resovled)
-//  3) If YES thne change the market outcome to YSE Othewise NO
-//  4) Update the all the given states
-
 #[derive(Accounts)]
 pub struct Resolve<'info> {
     #[account(mut)]
@@ -34,19 +28,24 @@ impl<'info> Resolve<'info> {
 
         require!(
             Clock::get()?.unix_timestamp >= self.chau_market.dead_line,
-            ChauError::MarketNotEnded
+            ChauError::MarketNotResolved
         );
 
-        match outcome {
-            MarketOutcome::YES => {
-                self.chau_market.market_outcome = MarketOutcome::YES;
-                self.chau_market.market_state = MarketStatus::Resolved;
+        match self.chau_market.market_state {
+            MarketStatus::Active => match outcome {
+                MarketOutcome::YES => {
+                    self.chau_market.market_outcome = MarketOutcome::YES;
+                    self.chau_market.market_state = MarketStatus::Resolved;
+                }
+                MarketOutcome::NO => {
+                    self.chau_market.market_outcome = MarketOutcome::YES;
+                    self.chau_market.market_state = MarketStatus::Resolved;
+                }
+                MarketOutcome::NotResolved => {}
+            },
+            MarketStatus::Resolved => {
+                return err!(ChauError::MarketGotResolved);
             }
-            MarketOutcome::NO => {
-                self.chau_market.market_outcome = MarketOutcome::YES;
-                self.chau_market.market_state = MarketStatus::Resolved;
-            }
-            MarketOutcome::NotResolved => {}
         }
 
         Ok(())

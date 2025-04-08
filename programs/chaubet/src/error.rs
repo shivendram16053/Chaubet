@@ -49,7 +49,4 @@ pub enum ChauError {
 
     #[msg("The given account is invalid")]
     InvalidAccount,
-
-    #[msg("Trying to resolve before market is ended")]
-    MarketNotEnded,
 }
