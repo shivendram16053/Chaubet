@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-chaubet = "8PXHZ4Y6noy89qMEVBhGgeLGFuMzkP1QXFwBTAsRD2Hd"
+chaubet = "ABUkyE3f3pyBeyS9YGtdKTHMKYHATSroW7S6u8JxNxaP"
 
 [registry]
 url = "https://api.apr.dev"

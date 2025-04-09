@@ -8,7 +8,7 @@ use anchor_spl::{
     token_interface::{burn_checked, BurnChecked, Mint, TokenAccount, TokenInterface},
 };
 
-use rust_decimal::prelude::{Decimal, *};
+use rust_decimal::prelude::*;
 
 use crate::{check_ban, check_zero, constant::*, decimal_convo, error::*, state::*};
 

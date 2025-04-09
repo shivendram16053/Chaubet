@@ -5,7 +5,6 @@ use anchor_lang::{
 };
 use anchor_spl::token_interface::{Mint, TokenInterface};
 use rust_decimal::prelude::*;
-use switchboard_on_demand::prelude::*;
 
 use crate::{
     admin_check,
@@ -70,8 +69,6 @@ pub struct CreateMarket<'info> {
         bump
     )]
     pub market_vault_account: SystemAccount<'info>, // Where bettor desposites there wagers
-
-    pub switchboard_aggregator: AccountLoader<'info, AggregatorAccountData>,
 
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,

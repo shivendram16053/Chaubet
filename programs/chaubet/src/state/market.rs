@@ -1,7 +1,7 @@
 use crate::error::ChauError;
 use crate::{add_or_sub, decimal_convo, div, mul};
 use anchor_lang::prelude::*;
-use rust_decimal::prelude::{Decimal, *};
+use rust_decimal::prelude::*;
 
 use super::MarketOutcome;
 

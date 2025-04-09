@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8pxhz4y6noy89qmevbhggelgfumzkp1qxfwbtasrd2hd");
+declare_id!("ABUkyE3f3pyBeyS9YGtdKTHMKYHATSroW7S6u8JxNxaP");
+
 pub mod constant;
 pub mod error;
 pub mod instructions;
@@ -11,7 +12,7 @@ use instructions::*;
 
 // - Implement Parlay betting feauture
 // - Integrate the switchboard Oracle
-// - If possible try to color the outcomes
+// - If possible try to color the outcomes use mpl-core
 
 #[program]
 pub mod chaubet {
