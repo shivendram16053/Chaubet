@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { PROGRAM_ID } from "./setup";
 import { admin, bettor_one, bettor_two, mint_no, mint_yes } from "./constant";
 import {
+  createAssociatedTokenAccountInstruction,
   createInitializeMint2Instruction,
   getAssociatedTokenAddressSync,
   MINT_SIZE,
@@ -62,7 +63,6 @@ export const getAllPDA = () => {
     PROGRAM_ID
   );
 
-  // seeds = [BETTOR_WALLET,bettor.key().to_bytes().as_ref(), chau_config.key().to_bytes().as_ref()],
   const [bettorOneVaultAccount] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       Buffer.from("bettor_wallet"),
@@ -83,7 +83,6 @@ export const getAllPDA = () => {
     PROGRAM_ID
   );
 
-  // seeds = [MARKET_VAULT,chau_market.key().to_bytes().as_ref()],
   const [marketVaultAccount] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("market_vault"), chauMarket.toBuffer()],
     PROGRAM_ID
@@ -109,7 +108,7 @@ export const getAllPDA = () => {
 
 export const getAllMint = async (
   client: BanksClient,
-  mintAuthority: anchor.web3.Keypair // owner is chauConfig
+  mintAuthority: anchor.web3.PublicKey // owner is chauConfig
 ) => {
   try {
     const rent = await client.getRent();
@@ -133,21 +132,21 @@ export const getAllMint = async (
     const mintYesIx = createInitializeMint2Instruction(
       mint_yes.publicKey,
       6,
-      mintAuthority.publicKey,
+      mintAuthority,
       null
     );
 
     const mintNoIx = createInitializeMint2Instruction(
       mint_no.publicKey,
       6,
-      mintAuthority.publicKey,
+      mintAuthority,
       null
     );
 
     await makeTransaction(
       client,
       [accountYesIx, accountNoIx, mintYesIx, mintNoIx],
-      [admin, mintAuthority],
+      [admin, mint_yes, mint_no],
       false
     );
 
@@ -162,41 +161,57 @@ export const getAllMint = async (
   }
 };
 
-export const getAllATA = (
+export const getAllATA = async (
   mintYes: anchor.web3.PublicKey,
-  mintNO: anchor.web3.PublicKey
+  mintNO: anchor.web3.PublicKey,
+  client: BanksClient
 ) => {
-  const bettorOneYesATA = getAssociatedTokenAddressSync(
-    mintYes,
-    bettor_one.publicKey,
-    true
-  );
+  try {
+    const bettorOneYesATA = await createATA(bettor_one, mintYes, client);
 
-  const bettorTwoYesATA = getAssociatedTokenAddressSync(
-    mintYes,
-    bettor_two.publicKey,
-    true
-  );
+    const bettorTwoYesATA = await createATA(bettor_two, mintYes, client);
 
-  const bettorOneNoATA = getAssociatedTokenAddressSync(
-    mintNO,
-    bettor_one.publicKey,
-    true
-  );
+    const bettorOneNoATA = await createATA(bettor_one, mintNO, client);
 
-  const bettorTwoNoATA = getAssociatedTokenAddressSync(
-    mintNO,
-    bettor_two.publicKey,
-    true
-  );
+    const bettorTwoNoATA = await createATA(bettor_two, mintNO, client);
 
-  return {
-    bettorOneNoATA,
-    bettorOneYesATA,
+    return {
+      bettorOneNoATA,
+      bettorOneYesATA,
 
-    bettorTwoYesATA,
-    bettorTwoNoATA,
-  };
+      bettorTwoYesATA,
+      bettorTwoNoATA,
+    };
+  } catch (error) {
+    throw new Error(`You got an error while getting all ATA ${error}`);
+  }
+};
+
+const createATA = async (
+  owner: anchor.web3.Keypair,
+  mint: anchor.web3.PublicKey,
+  client: BanksClient
+) => {
+  try {
+    const bettorATA = getAssociatedTokenAddressSync(
+      mint,
+      owner.publicKey,
+      true
+    );
+
+    const ataIx = createAssociatedTokenAccountInstruction(
+      owner.publicKey, // payer
+      bettorATA, // ata address
+      owner.publicKey, // owner of this ATA
+      mint // Mint address of this ATA
+    );
+
+    await makeTransaction(client, [ataIx], [owner], false);
+
+    return bettorATA;
+  } catch (error) {
+    throw new Error(`You got an error while creating an ATA ${error}`);
+  }
 };
 
 export const makeTransaction = async (

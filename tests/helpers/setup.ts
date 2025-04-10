@@ -8,6 +8,7 @@ import {
   admin_two,
   bettor_one,
   bettor_two,
+  malicious_guy,
 } from "./constant";
 import { BankrunProvider } from "anchor-bankrun";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -71,6 +72,15 @@ export const bankrunSetup = async () => {
             owner: anchor.web3.SystemProgram.programId,
           },
         },
+        {
+          address: malicious_guy.publicKey,
+          info: {
+            data: Buffer.alloc(0),
+            executable: false,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 30,
+            owner: anchor.web3.SystemProgram.programId,
+          },
+        },
       ]
     );
 
@@ -88,6 +98,9 @@ export const bankrunSetup = async () => {
     const bettorOneIContext = getAccount(bettor_one, context);
     const bettorTwoIContext = getAccount(bettor_two, context);
 
+    // malicious guy context account
+    const maliciousGuyIContext = getAccount(malicious_guy, context);
+
     return {
       context,
       provider,
@@ -101,6 +114,8 @@ export const bankrunSetup = async () => {
 
       bettorOneIContext,
       bettorTwoIContext,
+
+      maliciousGuyIContext,
     };
   } catch (error) {
     throw new Error(

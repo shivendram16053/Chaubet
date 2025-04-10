@@ -62,7 +62,14 @@ impl<'info> AdminWithdraw<'info> {
             signer_seeds,
         );
 
+        let amount = self.market_vault_account.lamports();
+
         transfer(ctx, self.market_vault_account.lamports())?;
+
+        self.chau_config
+            .treasuty_amount
+            .checked_add(amount)
+            .ok_or(ChauError::ArthemeticOverflow)?;
 
         Ok(())
     }

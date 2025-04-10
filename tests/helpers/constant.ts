@@ -9,3 +9,5 @@ export const bettor_two = anchor.web3.Keypair.generate();
 
 export const mint_yes = anchor.web3.Keypair.generate();
 export const mint_no = anchor.web3.Keypair.generate();
+
+export const malicious_guy = anchor.web3.Keypair.generate();

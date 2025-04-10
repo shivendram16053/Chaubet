@@ -40,7 +40,7 @@ impl<'info> InitializeConfig<'info> {
         }
 
         // Checks for more the two admins
-        require!(self.chau_config.admin.len() < 3, ChauError::TooManyAdmins);
+        require!(self.chau_config.admin.len() < 2, ChauError::TooManyAdmins);
 
         let admin_check = self
             .chau_config
