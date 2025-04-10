@@ -18,7 +18,7 @@ pub struct InitializeConfig<'info> {
         seeds = [CHAU_CONFIG],
         bump
     )]
-    pub chau_config: Account<'info, ChauConfig>,
+    pub chau_config: Box<Account<'info, ChauConfig>>,
 
     #[account(
         seeds = [TREASURY,chau_config.key().to_bytes().as_ref()],
