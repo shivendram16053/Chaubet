@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! check_zero {
     ($arr:expr) => {
-        if !$arr.iter().any(|amount| *amount == Decimal::ZERO) {
+        if $arr.iter().any(|amount| *amount == Decimal::ZERO) {
             return err!(ChauError::ZeroAmount);
         }
     };

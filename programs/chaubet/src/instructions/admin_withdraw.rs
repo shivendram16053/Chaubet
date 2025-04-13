@@ -19,7 +19,7 @@ pub struct AdminWithdraw<'info> {
 
     #[account(
         mut,
-        seeds = [MARKET,chau_config.key().to_bytes().as_ref(),chau_market.market_name.as_bytes()],
+        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),&chau_market.market_name.as_bytes()[..32]],
         bump = chau_market.market_bump
     )]
     pub chau_market: Account<'info, ChauMarket>,

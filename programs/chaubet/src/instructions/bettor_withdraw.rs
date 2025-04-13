@@ -1,5 +1,6 @@
 use anchor_lang::{
     prelude::*,
+    solana_program::native_token::LAMPORTS_PER_SOL,
     system_program::{transfer, Transfer},
 };
 
@@ -19,7 +20,7 @@ pub struct BettorWithdraw<'info> {
 
     #[account(
         mut,
-        seeds = [MARKET,chau_config.key().to_bytes().as_ref(),chau_market.market_name.as_bytes()],
+        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),&chau_market.market_name.as_bytes()[..32]],
         bump = chau_market.market_bump
     )]
     pub chau_market: Account<'info, ChauMarket>,

@@ -51,7 +51,7 @@ pub struct BuyShares<'info> {
 
     #[account(
         mut,
-        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),chau_market.market_name.as_bytes()],
+        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),&chau_market.market_name.as_bytes()[..32]],
         bump = chau_market.market_bump
     )]
     pub chau_market: Account<'info, ChauMarket>,
@@ -160,7 +160,7 @@ impl<'info> BuyShares<'info> {
         // transfer wager amount from bettor wallet to vault Accounts
 
         require!(
-            self.bettor_wallet_account.lamports() >= amount,
+            self.bettor_wallet_account.lamports() >= amount * LAMPORTS_PER_SOL,
             ChauError::NotEnoughAmount
         );
 

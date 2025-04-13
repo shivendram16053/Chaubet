@@ -18,13 +18,6 @@ pub struct Ban<'info> {
 
     #[account(
         mut,
-        seeds = [MARKET,chau_config.key().to_bytes().as_ref(),chau_market.market_name.as_bytes()],
-        bump = chau_market.market_bump
-    )]
-    pub chau_market: Account<'info, ChauMarket>,
-
-    #[account(
-        mut,
         seeds = [BETTOR_PROFILE,bettor.key().to_bytes().as_ref(),chau_config.key().to_bytes().as_ref()],
         bump = betror_profile.bettor_bump,
 

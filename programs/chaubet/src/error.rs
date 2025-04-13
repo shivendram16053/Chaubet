@@ -8,6 +8,9 @@ pub enum ChauError {
     #[msg("The liquidity parameter b is too low")]
     ParameterTooLow,
 
+    #[msg("The given string length is more then max")]
+    MaxLenght,
+
     #[msg("The admin already exist no need to sign again")]
     AdminExist,
 

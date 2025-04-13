@@ -8,9 +8,9 @@ use super::MarketOutcome;
 #[account]
 #[derive(InitSpace)]
 pub struct ChauMarket {
-    #[max_len(30)]
+    #[max_len(32)]
     pub market_name: String,
-    #[max_len(150)]
+    #[max_len(100)]
     pub description: String,
 
     pub lsmr_b: u64,    // make sure b is higher (eg:- 100)
@@ -36,30 +36,31 @@ pub enum MarketStatus {
 }
 
 impl ChauMarket {
-    pub fn init_chaumarket(&mut self, arg: ChauMarket) -> Self {
+    pub fn init_chaumarket(&mut self, arg: ChauMarket) -> &Self {
         // Convert all numbers to decimal_convo
-        Self {
-            market_name: arg.market_name,
-            description: arg.description,
 
-            // LMSR liquidity
-            lsmr_b: arg.lsmr_b,
-            dead_line: arg.dead_line,
+        self.market_name = arg.market_name;
+        self.description = arg.description;
 
-            // market state
-            market_state: arg.market_state,
-            market_outcome: arg.market_outcome,
+        // LMSR liquidity
+        self.lsmr_b = arg.lsmr_b;
+        self.dead_line = arg.dead_line;
 
-            // shares
-            outcome_yes_shares: arg.outcome_yes_shares,
-            outcome_no_shares: arg.outcome_no_shares,
+        // market state
+        self.market_state = arg.market_state;
+        self.market_outcome = arg.market_outcome;
 
-            // bumps
-            mint_yes_bump: arg.mint_yes_bump,
-            mint_no_bump: arg.mint_no_bump,
-            market_vault_bump: arg.market_vault_bump,
-            market_bump: arg.market_bump,
-        }
+        // shares
+        self.outcome_yes_shares = arg.outcome_yes_shares;
+        self.outcome_no_shares = arg.outcome_no_shares;
+
+        // bumps
+        self.mint_yes_bump = arg.mint_yes_bump;
+        self.mint_no_bump = arg.mint_no_bump;
+        self.market_vault_bump = arg.market_vault_bump;
+        self.market_bump = arg.market_bump;
+
+        return self;
     }
 
     // price of outcome_yes_shares

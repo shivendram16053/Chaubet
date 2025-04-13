@@ -40,7 +40,6 @@ pub struct InitializeBettor<'info> {
         bump
     )]
     pub bettor_wallet_account: SystemAccount<'info>,
-
     pub system_program: Program<'info, System>,
 }
 

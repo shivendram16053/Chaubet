@@ -9,6 +9,7 @@
     "@coral-xyz/anchor": "^0.31.0",
     "@solana/spl-token": "^0.4.13",
     "anchor-bankrun": "^0.5.0",
+    "crypto": "^1.0.1",
     "solana-bankrun": "^0.4.0"
   },
   "devDependencies": {

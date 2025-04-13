@@ -30,7 +30,7 @@ export interface Accounts {
     no: anchor.web3.PublicKey;
   };
 
-  bettor: {
+  bettorAccounts: {
     oneWager: anchor.web3.PublicKey;
     twoWager: anchor.web3.PublicKey;
 
@@ -41,12 +41,23 @@ export interface Accounts {
     twoVault: anchor.web3.PublicKey;
   };
 
+  maliciousAccounts: {
+    wager: anchor.web3.PublicKey;
+    profile: anchor.web3.PublicKey;
+    vault: anchor.web3.PublicKey;
+  };
+
   bettorATA: {
     oneYes: anchor.web3.PublicKey;
     oneNo: anchor.web3.PublicKey;
 
     twoYes: anchor.web3.PublicKey;
     twoNo: anchor.web3.PublicKey;
+  };
+
+  maliciousATA: {
+    yes: anchor.web3.PublicKey;
+    no: anchor.web3.PublicKey;
   };
 
   market: {
@@ -70,4 +81,15 @@ export type TestSetupType = Actors & Accounts & BankConfig;
 export type InitConfigType = {
   name: string;
   fees: number;
+};
+
+export type MarketType = {
+  name: string;
+  testArg: {
+    marketName: string;
+    marketDes: string;
+
+    lmsrB: number;
+    deadLine: number;
+  };
 };

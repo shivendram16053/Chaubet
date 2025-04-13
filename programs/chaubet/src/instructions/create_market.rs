@@ -33,16 +33,16 @@ pub struct CreateMarket<'info> {
         seeds = [CHAU_CONFIG],
         bump = chau_config.config_bump
     )]
-    pub chau_config: Account<'info, ChauConfig>,
+    pub chau_config: Box<Account<'info, ChauConfig>>,
 
     #[account(
         init,
         payer = admin,
-        space = ChauMarket::DISCRIMINATOR.len() + ChauMarket::INIT_SPACE,
-        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),name.as_bytes()],
+        space = 1024,
+        seeds = [MARKET, chau_config.key().to_bytes().as_ref(),&name.as_bytes()[..32]],
         bump
     )]
-    pub chau_market: Account<'info, ChauMarket>,
+    pub chau_market: Box<Account<'info, ChauMarket>>,
 
     #[account(
         init,
@@ -52,7 +52,7 @@ pub struct CreateMarket<'info> {
         mint::authority = chau_config,
         mint::decimals = 6
     )]
-    pub mint_yes: InterfaceAccount<'info, Mint>,
+    pub mint_yes: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
             init,
@@ -62,9 +62,10 @@ pub struct CreateMarket<'info> {
             mint::authority = chau_config,
             mint::decimals = 6
     )]
-    pub mint_no: InterfaceAccount<'info, Mint>,
+    pub mint_no: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
+        mut,
         seeds = [MARKET_VAULT,chau_market.key().to_bytes().as_ref()],
         bump
     )]
@@ -81,8 +82,11 @@ impl<'info> CreateMarket<'info> {
         // Check: The Liquidity Parameter should pass the minimum threshold
         require_gte!(arg.lmsr_b, MINIMUM_LMSR_B, ChauError::ParameterTooLow);
 
+        require!(arg.name.len() < 50, ChauError::MaxLenght);
+
         // intialized the LMSR
-        let lmsr = self.chau_market.init_chaumarket(ChauMarket {
+        // Initialize the market
+        self.chau_market.init_chaumarket(ChauMarket {
             market_name: arg.name,
             description: arg.description,
 
@@ -101,7 +105,11 @@ impl<'info> CreateMarket<'info> {
             market_bump: bump.chau_market,
         });
 
-        self.deposite_intial_amount(lmsr)?;
+        // Create a clone of the inner ChauMarket data
+        let market_data = (**self.chau_market).clone();
+
+        // Now call the method with the cloned data
+        self.deposite_intial_amount(market_data)?;
 
         Ok(())
     }
@@ -127,7 +135,7 @@ impl<'info> CreateMarket<'info> {
             .ok_or(ChauError::ArthemeticError)?;
 
         require!(
-            self.admin.to_account_info().lamports() > amount,
+            self.admin.to_account_info().lamports() > amount * LAMPORTS_PER_SOL,
             ChauError::NotEnoughAmount
         );
 

@@ -32,7 +32,7 @@ export const bankrunSetup = async () => {
           info: {
             data: Buffer.alloc(0),
             executable: false,
-            lamports: anchor.web3.LAMPORTS_PER_SOL * 10,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 5000,
             owner: anchor.web3.SystemProgram.programId,
           },
         },
@@ -41,7 +41,7 @@ export const bankrunSetup = async () => {
           info: {
             data: Buffer.alloc(0),
             executable: false,
-            lamports: anchor.web3.LAMPORTS_PER_SOL * 10,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 5000,
             owner: anchor.web3.SystemProgram.programId,
           },
         },
@@ -50,7 +50,7 @@ export const bankrunSetup = async () => {
           info: {
             data: Buffer.alloc(0),
             executable: false,
-            lamports: anchor.web3.LAMPORTS_PER_SOL * 10,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 5000,
             owner: anchor.web3.SystemProgram.programId,
           },
         },
@@ -77,7 +77,7 @@ export const bankrunSetup = async () => {
           info: {
             data: Buffer.alloc(0),
             executable: false,
-            lamports: anchor.web3.LAMPORTS_PER_SOL * 30,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 3000,
             owner: anchor.web3.SystemProgram.programId,
           },
         },
