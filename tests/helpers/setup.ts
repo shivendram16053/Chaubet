@@ -59,7 +59,7 @@ export const bankrunSetup = async () => {
           info: {
             data: Buffer.alloc(0),
             executable: false,
-            lamports: anchor.web3.LAMPORTS_PER_SOL * 30,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 100,
             owner: anchor.web3.SystemProgram.programId,
           },
         },
@@ -68,7 +68,7 @@ export const bankrunSetup = async () => {
           info: {
             data: Buffer.alloc(0),
             executable: false,
-            lamports: anchor.web3.LAMPORTS_PER_SOL * 30,
+            lamports: anchor.web3.LAMPORTS_PER_SOL * 100,
             owner: anchor.web3.SystemProgram.programId,
           },
         },

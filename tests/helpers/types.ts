@@ -93,3 +93,11 @@ export type MarketType = {
     deadLine: number;
   };
 };
+
+export type TradeType = {
+  name: string;
+  amount: number;
+  isYes: boolean;
+  isBuy: boolean;
+  bettor: number;
+};

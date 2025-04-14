@@ -74,14 +74,14 @@ pub struct SellShares<'info> {
         associated_token::authority = bettor,
         associated_token::mint = mint_yes,
     )]
-    pub bettor_yes_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub bettor_yes_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = mint_no,
         associated_token::authority = bettor,
     )]
-    pub bettor_no_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub bettor_no_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -135,8 +135,8 @@ impl<'info> SellShares<'info> {
         // burn the given share amount_sol
 
         let (mint, from) = match is_yes {
-            true => (&self.mint_yes, &self.bettor_yes_ata),
-            false => (&self.mint_no, &self.bettor_no_ata),
+            true => (&self.mint_yes, &self.bettor_yes_account),
+            false => (&self.mint_no, &self.bettor_no_account),
         };
 
         let ctx = CpiContext::new(

@@ -13,6 +13,8 @@ pub struct ChauMarket {
     #[max_len(100)]
     pub description: String,
 
+    pub intial_deposite: u64,
+
     pub lsmr_b: u64,    // make sure b is higher (eg:- 100)
     pub dead_line: i64, // unix_time_stamp
 
@@ -61,28 +63,6 @@ impl ChauMarket {
         self.market_bump = arg.market_bump;
 
         return self;
-    }
-
-    // price of outcome_yes_shares
-    pub fn price_calculation(&self, is_yes: bool) -> Result<Decimal> {
-        let pow_yes = div!(
-            decimal_convo!(self.outcome_yes_shares),
-            decimal_convo!(self.lsmr_b)
-        )
-        .exp();
-
-        let pow_no = div!(
-            decimal_convo!(self.outcome_no_shares),
-            decimal_convo!(self.lsmr_b)
-        )
-        .exp();
-        let denominator = add_or_sub!(pow_yes, pow_no, true)?;
-
-        match is_yes {
-            true => Ok(div!(pow_yes, denominator)),
-
-            false => Ok(div!(pow_no, denominator)),
-        }
     }
 
     // cost calculation
@@ -146,15 +126,13 @@ impl ChauMarket {
 
     // fee calculation
     fn fees_calculation(&self, fee_bps: u16, delta_cost: Decimal, is_buy: bool) -> Result<Decimal> {
-        // Check: make sure the given fees is good
         require!(fee_bps < 10000 && fee_bps != 0, ChauError::InvalidFees);
 
-        let div_fee = div!(Decimal::from(1), Decimal::from(10000));
+        let fee_multiplier = div!(decimal_convo!(fee_bps), decimal_convo!(10000));
+        let fee_amount = mul!(delta_cost, fee_multiplier);
 
-        let mul_fee = mul!(Decimal::from(fee_bps), div_fee);
-        let fees = mul!(delta_cost, add_or_sub!(Decimal::from(1), mul_fee, false)?);
+        let cost = add_or_sub!(delta_cost, fee_amount, is_buy)?;
 
-        let total_fees = add_or_sub!(delta_cost, fees, is_buy)?;
-        Ok(total_fees)
+        Ok(cost) // Buyer pays original amount + fee
     }
 }

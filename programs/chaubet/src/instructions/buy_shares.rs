@@ -222,34 +222,45 @@ impl<'info> BuyShares<'info> {
 
         if is_yes {
             // update the bet account
-            self.wager_account
+            self.wager_account.yes_shares = self
+                .wager_account
                 .yes_shares
                 .checked_add(share_amount)
                 .ok_or(ChauError::ArthemeticOverflow)?;
 
             // update the market account
-            self.chau_market
+            self.chau_market.outcome_yes_shares = self
+                .chau_market
                 .outcome_yes_shares
                 .checked_add(share_amount)
                 .ok_or(ChauError::ArthemeticOverflow)?;
         } else {
             // update the bet account
-            self.wager_account
+            self.wager_account.no_shares = self
+                .wager_account
                 .no_shares
                 .checked_add(share_amount)
                 .ok_or(ChauError::ArthemeticOverflow)?;
 
             // update the market account
-            self.chau_market
+            self.chau_market.outcome_no_shares = self
+                .chau_market
                 .outcome_no_shares
                 .checked_add(share_amount)
                 .ok_or(ChauError::ArthemeticOverflow)?;
         }
 
-        self.wager_account
+        self.wager_account.bet_amount_spent = self
+            .wager_account
             .bet_amount_spent
             .checked_add(bet_amount)
-            .unwrap();
+            .ok_or(ChauError::ArthemeticOverflow)?;
+
+        // self.bettor_profile.balance = self
+        //     .bettor_profile
+        //     .balance
+        //     .checked_sub(bet_amount)
+        //     .ok_or(ChauError::ArthemeticUnderflow)?;
 
         Ok(())
     }

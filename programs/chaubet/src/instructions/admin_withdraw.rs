@@ -25,12 +25,14 @@ pub struct AdminWithdraw<'info> {
     pub chau_market: Account<'info, ChauMarket>,
 
     #[account(
+        mut,
         seeds = [MARKET_VAULT,chau_market.key().to_bytes().as_ref()],
         bump = chau_market.market_vault_bump
     )]
     pub market_vault_account: SystemAccount<'info>, // Where bettor desposites there wagers
 
     #[account(
+        mut,
         seeds = [TREASURY,chau_config.key().to_bytes().as_ref()],
         bump = chau_config.trasury_bump
     )]
@@ -66,7 +68,8 @@ impl<'info> AdminWithdraw<'info> {
 
         transfer(ctx, self.market_vault_account.lamports())?;
 
-        self.chau_config
+        self.chau_config.treasuty_amount = self
+            .chau_config
             .treasuty_amount
             .checked_add(amount)
             .ok_or(ChauError::ArthemeticOverflow)?;

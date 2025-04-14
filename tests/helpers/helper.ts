@@ -4,6 +4,7 @@ import { bettor_one, bettor_two, malicious_guy } from "./constant";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   BanksClient,
+  BanksTransactionMeta,
   BanksTransactionResultWithMeta,
   Clock,
   ProgramTestContext,
@@ -235,7 +236,7 @@ export const makeTransaction = async (
       throw new Error(trxRes.result);
     } else {
       // If u know the transaction is not going to fail then use this
-      let trx = await client.processTransaction(tx);
+      let trx: BanksTransactionMeta = await client.processTransaction(tx);
 
       return trx;
     }

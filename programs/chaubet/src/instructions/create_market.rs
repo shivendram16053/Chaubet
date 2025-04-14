@@ -89,6 +89,7 @@ impl<'info> CreateMarket<'info> {
         self.chau_market.init_chaumarket(ChauMarket {
             market_name: arg.name,
             description: arg.description,
+            intial_deposite: 0,
 
             lsmr_b: arg.lmsr_b,
             dead_line: arg.dead_line,
@@ -114,7 +115,7 @@ impl<'info> CreateMarket<'info> {
         Ok(())
     }
 
-    fn deposite_intial_amount(&self, lmsr: ChauMarket) -> Result<()> {
+    fn deposite_intial_amount(&mut self, lmsr: ChauMarket) -> Result<()> {
         // Intialize Deposite for the market_vault_account
 
         let accounts = Transfer {
@@ -140,6 +141,8 @@ impl<'info> CreateMarket<'info> {
         );
 
         transfer(ctx, amount * LAMPORTS_PER_SOL)?;
+
+        self.chau_market.intial_deposite = amount;
 
         Ok(())
     }

@@ -1,17 +1,28 @@
-import { describe, test, beforeAll } from "@jest/globals";
-import { InitConfigType, TestSetupType } from "./helpers/types";
+import { describe, test, beforeAll, expect } from "@jest/globals";
+import { InitConfigType, TestSetupType, TradeType } from "./helpers/types";
 import { bankrunSetup } from "./helpers/setup";
 import {
   getAllATA,
   getAllMint,
   getAllPDA,
+  makeTimeTravle,
   makeTransaction,
 } from "./helpers/helper";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { BN } from "bn.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
-import { fetchProgramDerivedAccounts } from "./helpers/accounts";
+import {
+  fetchBettorProfile,
+  fetchProgramDerivedAccounts,
+  fetchWagerPDA,
+  getAccount,
+} from "./helpers/accounts";
+import {
+  ComputeBudgetProgram,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
 
 describe("chaubet", () => {
   const testSetup: TestSetupType = {
@@ -107,7 +118,7 @@ describe("chaubet", () => {
       },
       {
         name: "Second Admin",
-        fees: 200,
+        fees: null,
       },
       {
         name: "Third Admin",
@@ -232,15 +243,15 @@ describe("chaubet", () => {
     const testCases = [
       {
         name: "rahul",
-        amount: 10,
+        amount: 50,
       },
       {
         name: "pranay",
-        amount: 10,
+        amount: 50,
       },
       {
         name: "vivek(malicious guy)",
-        amount: 10,
+        amount: 100,
       },
     ];
 
@@ -398,9 +409,11 @@ describe("chaubet", () => {
         );
 
         console.log(
-          `ChauMarket details:- 1) marketName: ${
+          `✨ ChauMarket details:- 1) marketName: ${
             accounts.chauMarketAccount.marketName
-          } and 2)LMSR_B: ${accounts.chauMarketAccount.lsmrB.toNumber()}`
+          } and 2)LMSR_B: ${accounts.chauMarketAccount.lsmrB.toNumber()} 3) The initialDeposite: ${
+            accounts.chauMarketAccount.intialDeposite
+          } ✨`
         );
 
         console.log(`market is successfully created by ${market.name} 🔥`);
@@ -412,32 +425,575 @@ describe("chaubet", () => {
     });
   });
 
-  describe("Its time to buy some tokens", () => {
-    test("Buying Yes Shares", async () => {
+  describe("Its time to trade some tokens", () => {
+    let buyingTest: TradeType[] = [
+      {
+        name: "Bettor One",
+        amount: 20,
+        isYes: true,
+        isBuy: true,
+        bettor: 0,
+      },
+      {
+        name: "Bettor Two",
+        amount: 7,
+        isYes: false,
+        isBuy: true,
+        bettor: 1,
+      },
+      {
+        name: "malicious guy",
+        amount: 4,
+        isYes: false,
+        isBuy: true,
+        bettor: 2,
+      },
+      {
+        name: "Bettor One",
+        amount: 10,
+        isYes: true,
+        isBuy: false,
+        bettor: 0,
+      },
+
+      {
+        name: "Bettor Two",
+        amount: 10,
+        isYes: true,
+        isBuy: true,
+        bettor: 1,
+      },
+
+      {
+        name: "malicious guy",
+        amount: 4,
+        isYes: false,
+        isBuy: false,
+        bettor: 2,
+      },
+    ];
+
+    buyingTest.forEach((testInfo) => {
+      test(`${testInfo.name} is ${testInfo.isBuy ? "Buying" : "Selling"} ${
+        testInfo.isYes ? "YES" : "NO"
+      } Shares`, async () => {
+        try {
+          // Create a compute budget instruction to increase the compute unit limit
+          // This is needed because the buyShares instruction uses complex math operations (exp, ln)
+          // that require more compute units than the default limit
+          const computeBudgetIx = ComputeBudgetProgram.setComputeUnitLimit({
+            units: 500000, // Increase from default 200,000 to 500,000
+          });
+
+          switch (testInfo.bettor) {
+            case 0: {
+              let tradeShareIx: TransactionInstruction;
+
+              if (testInfo.isBuy) {
+                tradeShareIx = await testSetup.bettor.one.program.methods
+                  .buyShares(new BN(testInfo.amount), testInfo.isYes)
+                  .accountsStrict({
+                    bettor: testSetup.bettor.one.keypair.publicKey,
+
+                    bettorYesAccount: testSetup.bettorATA.oneYes,
+                    bettorNoAccount: testSetup.bettorATA.oneNo,
+
+                    bettorProfile: testSetup.bettorAccounts.oneProfile,
+                    bettorWalletAccount: testSetup.bettorAccounts.oneVault,
+                    wagerAccount: testSetup.bettorAccounts.oneWager,
+
+                    chauMarket: testSetup.market.chauMarket,
+                    marketVaultAccount: testSetup.market.chauMarketVault,
+
+                    mintYes: testSetup.mint.yes,
+                    mintNo: testSetup.mint.no,
+
+                    chauConfig: testSetup.config.chauConfig,
+
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+                  })
+                  .instruction();
+              } else {
+                tradeShareIx = await testSetup.bettor.one.program.methods
+                  .sellShares(new BN(testInfo.amount), testInfo.isYes)
+                  .accountsStrict({
+                    bettor: testSetup.bettor.one.keypair.publicKey,
+
+                    bettorYesAccount: testSetup.bettorATA.oneYes,
+                    bettorNoAccount: testSetup.bettorATA.oneNo,
+
+                    bettorProfile: testSetup.bettorAccounts.oneProfile,
+                    bettorWalletAccount: testSetup.bettorAccounts.oneVault,
+                    wagerAccount: testSetup.bettorAccounts.oneWager,
+
+                    chauMarket: testSetup.market.chauMarket,
+                    marketVaultAccount: testSetup.market.chauMarketVault,
+
+                    mintYes: testSetup.mint.yes,
+                    mintNo: testSetup.mint.no,
+
+                    chauConfig: testSetup.config.chauConfig,
+
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+                  })
+                  .instruction();
+              }
+
+              let trxMets = await makeTransaction(
+                testSetup.client,
+                [computeBudgetIx, tradeShareIx], // Add compute budget instruction first
+                [testSetup.bettor.one.keypair],
+                false // Changed to false since we expect it to succeed with the higher compute budget
+              );
+
+              console.log(
+                `The given trsaction CU is ${trxMets.computeUnitsConsumed}`
+              );
+
+              let wagerAcc = await fetchWagerPDA(
+                testSetup.bettor.one.program,
+                testSetup.bettorAccounts.oneWager
+              );
+
+              let chauMarketAcc = await fetchProgramDerivedAccounts(
+                testSetup.bettor.one.program,
+                testSetup.market.chauMarket,
+                testSetup.config.chauConfig
+              );
+
+              console.log(
+                `✨ ${testInfo.name}:-  The wager Account destructuring 1) YES Shares:- ${wagerAcc.yesShares} 2) NO Shares:- ${wagerAcc.noShares} 3) Amount Spent ${wagerAcc.betAmountSpent} ✨`
+              );
+
+              console.log(
+                `✨ The ChauMarket account destructuring 1) Total YES Shares ${chauMarketAcc.chauMarketAccount.outcomeYesShares}  2)Total NoShares ${chauMarketAcc.chauMarketAccount.outcomeNoShares} `
+              );
+
+              break;
+            }
+            case 1: {
+              let tradeShareIx: TransactionInstruction;
+
+              if (testInfo.isBuy) {
+                tradeShareIx = await testSetup.bettor.two.program.methods
+                  .buyShares(new BN(testInfo.amount), testInfo.isYes)
+                  .accountsStrict({
+                    bettor: testSetup.bettor.two.keypair.publicKey,
+
+                    bettorYesAccount: testSetup.bettorATA.twoYes,
+                    bettorNoAccount: testSetup.bettorATA.twoNo,
+
+                    bettorProfile: testSetup.bettorAccounts.twoProfile,
+                    bettorWalletAccount: testSetup.bettorAccounts.twoVault,
+                    wagerAccount: testSetup.bettorAccounts.twoWager,
+
+                    chauMarket: testSetup.market.chauMarket,
+                    marketVaultAccount: testSetup.market.chauMarketVault,
+
+                    mintYes: testSetup.mint.yes,
+                    mintNo: testSetup.mint.no,
+
+                    chauConfig: testSetup.config.chauConfig,
+
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+                  })
+                  .signers([testSetup.bettor.two.keypair])
+                  .instruction();
+              } else {
+                tradeShareIx = await testSetup.bettor.two.program.methods
+                  .sellShares(new BN(testInfo.amount), testInfo.isYes)
+                  .accountsStrict({
+                    bettor: testSetup.bettor.two.keypair.publicKey,
+
+                    bettorYesAccount: testSetup.bettorATA.twoYes,
+                    bettorNoAccount: testSetup.bettorATA.twoNo,
+
+                    bettorProfile: testSetup.bettorAccounts.twoProfile,
+                    bettorWalletAccount: testSetup.bettorAccounts.twoVault,
+                    wagerAccount: testSetup.bettorAccounts.twoWager,
+
+                    chauMarket: testSetup.market.chauMarket,
+                    marketVaultAccount: testSetup.market.chauMarketVault,
+
+                    mintYes: testSetup.mint.yes,
+                    mintNo: testSetup.mint.no,
+
+                    chauConfig: testSetup.config.chauConfig,
+
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+                  })
+                  .instruction();
+              }
+
+              let trxMets = await makeTransaction(
+                testSetup.client,
+                [computeBudgetIx, tradeShareIx], // Add compute budget instruction first
+                [testSetup.bettor.two.keypair],
+                false // Changed to false since we expect it to succeed with the higher compute budget
+              );
+
+              console.log(
+                `The given trsaction CU is ${trxMets.computeUnitsConsumed}`
+              );
+
+              let wagerAcc = await fetchWagerPDA(
+                testSetup.bettor.two.program,
+                testSetup.bettorAccounts.twoWager
+              );
+
+              let chauMarketAcc = await fetchProgramDerivedAccounts(
+                testSetup.bettor.two.program,
+                testSetup.market.chauMarket,
+                testSetup.config.chauConfig
+              );
+
+              console.log(
+                `✨ ${testInfo.name}:-  The wager Account destructuring 1) YES Shares:- ${wagerAcc.yesShares} 2) NO Shares:- ${wagerAcc.noShares} 3) Amount Spent ${wagerAcc.betAmountSpent} ✨`
+              );
+
+              console.log(
+                `✨ The ChauMarket account destructuring 1) Total YES Shares ${chauMarketAcc.chauMarketAccount.outcomeYesShares}  2)Total NoShares ${chauMarketAcc.chauMarketAccount.outcomeNoShares} `
+              );
+
+              break;
+            }
+            case 2: {
+              let tradeShareIx: TransactionInstruction;
+              if (testInfo.isBuy) {
+                tradeShareIx = await testSetup.malicious.program.methods
+                  .buyShares(new BN(testInfo.amount), testInfo.isYes)
+                  .accountsStrict({
+                    bettor: testSetup.malicious.keypair.publicKey,
+
+                    bettorYesAccount: testSetup.maliciousATA.yes,
+                    bettorNoAccount: testSetup.maliciousATA.no,
+
+                    bettorProfile: testSetup.maliciousAccounts.profile,
+                    bettorWalletAccount: testSetup.maliciousAccounts.vault,
+                    wagerAccount: testSetup.maliciousAccounts.wager,
+
+                    chauMarket: testSetup.market.chauMarket,
+                    marketVaultAccount: testSetup.market.chauMarketVault,
+
+                    mintYes: testSetup.mint.yes,
+                    mintNo: testSetup.mint.no,
+
+                    chauConfig: testSetup.config.chauConfig,
+
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+                  })
+                  .instruction();
+              } else {
+                tradeShareIx = await testSetup.malicious.program.methods
+                  .sellShares(new BN(testInfo.amount), testInfo.isYes)
+                  .accountsStrict({
+                    bettor: testSetup.malicious.keypair.publicKey,
+
+                    bettorYesAccount: testSetup.maliciousATA.yes,
+                    bettorNoAccount: testSetup.maliciousATA.no,
+
+                    bettorProfile: testSetup.maliciousAccounts.profile,
+                    bettorWalletAccount: testSetup.maliciousAccounts.vault,
+                    wagerAccount: testSetup.maliciousAccounts.wager,
+
+                    chauMarket: testSetup.market.chauMarket,
+                    marketVaultAccount: testSetup.market.chauMarketVault,
+
+                    mintYes: testSetup.mint.yes,
+                    mintNo: testSetup.mint.no,
+
+                    chauConfig: testSetup.config.chauConfig,
+
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+                  })
+                  .instruction();
+              }
+
+              let trxMets = await makeTransaction(
+                testSetup.client,
+                [computeBudgetIx, tradeShareIx], // Add compute budget instruction first
+                [testSetup.malicious.keypair],
+                false // Changed to false since we expect it to succeed with the higher compute budget
+              );
+
+              console.log(
+                `The given trsaction CU is ${trxMets.computeUnitsConsumed}`
+              );
+
+              let wagerAcc = await fetchWagerPDA(
+                testSetup.malicious.program,
+                testSetup.maliciousAccounts.wager
+              );
+
+              let chauMarketAcc = await fetchProgramDerivedAccounts(
+                testSetup.malicious.program,
+                testSetup.market.chauMarket,
+                testSetup.config.chauConfig
+              );
+
+              console.log(
+                `✨ ${testInfo.name}:-  The wager Account destructuring 1) YES Shares:- ${wagerAcc.yesShares} 2) NO Shares:- ${wagerAcc.noShares} 3) Amount Spent ${wagerAcc.betAmountSpent} ✨`
+              );
+
+              console.log(
+                `✨ The ChauMarket account destructuring 1) Total YES Shares ${chauMarketAcc.chauMarketAccount.outcomeYesShares}  2)Total NoShares ${chauMarketAcc.chauMarketAccount.outcomeNoShares} `
+              );
+
+              break;
+            }
+          }
+        } catch (error) {
+          throw new Error(`You got an error while buying shares ${error}`);
+        }
+      });
+    });
+  });
+
+  describe("Lets ban this guy", () => {
+    test("Banning malicious guy", async () => {
       try {
-        let ix = await testSetup.bettor.one.program.methods
-          .buyShares(new BN(10), true)
+        let ix = await testSetup.admin.one.program.methods
+          .banBettor()
           .accountsStrict({
-            bettor: testSetup.bettor.one.keypair.publicKey,
+            admin: testSetup.admin.one.keypair.publicKey,
+            bettor: testSetup.malicious.keypair.publicKey,
+            chauConfig: testSetup.config.chauConfig,
 
-            bettorYesAccount: testSetup.bettorATA.oneYes,
-            bettorNoAccount: testSetup.bettorATA.oneNo,
+            betrorProfile: testSetup.maliciousAccounts.profile,
 
-            bettorProfile: testSetup.bettorAccounts.oneProfile,
-            bettorWalletAccount: testSetup.bettorAccounts.oneVault,
-            wagerAccount: testSetup.bettorAccounts.oneWager,
+            systemProgram: SYSTEM_PROGRAM_ID,
+          })
+          .instruction();
+
+        await makeTransaction(
+          testSetup.client,
+          [ix],
+          [testSetup.admin.one.keypair],
+          false
+        );
+
+        console.log(`successfully banned maliciousAccount`);
+
+        const maliciousAcc = await fetchBettorProfile(
+          testSetup.admin.one.program,
+          testSetup.maliciousAccounts.profile
+        );
+
+        expect(maliciousAcc.isBan).toEqual(true);
+      } catch (error) {
+        throw new Error(`You got an error while banning this guy ${error}`);
+      }
+    });
+  });
+
+  describe("Resolve the market", () => {
+    test("market got resolved", async () => {
+      enum MarketOutcome {
+        YES = 0,
+        NO = 1,
+        NotResolved = 2,
+      }
+      try {
+        let one_month = 2_592_000;
+
+        let clock = await testSetup.client.getClock();
+
+        let addedUnixTime = clock.unixTimestamp + BigInt(9 * one_month);
+
+        // I am time travling to 9 months ahead in future
+        makeTimeTravle(testSetup.context, addedUnixTime, clock);
+
+        let ix = await testSetup.admin.one.program.methods
+          .resolveMarket({ yes: {} })
+          .accountsStrict({
+            admin: testSetup.admin.one.keypair.publicKey,
+            chauConfig: testSetup.config.chauConfig,
+            chauMarket: testSetup.market.chauMarket,
+          })
+          .instruction();
+
+        await makeTransaction(
+          testSetup.client,
+          [ix],
+          [testSetup.admin.one.keypair],
+          false
+        );
+
+        console.log(`Market Resolution completed`);
+      } catch (error) {
+        throw new Error(`You got an error while resolving the market ${error}`);
+      }
+    });
+  });
+
+  describe("Claim bettor amount", () => {
+    test("bettor one claim amountl claiming for his 10 shares of YES", async () => {
+      try {
+        let bettor_one_yes = await getAccount(
+          testSetup.client,
+          testSetup.bettorATA.oneYes
+        );
+
+        if (Number(bettor_one_yes.amount) != 0) {
+          let ix = await testSetup.bettor.one.program.methods
+            .claimBettorAmount(new BN(Number(bettor_one_yes.amount)))
+            .accountsStrict({
+              bettor: testSetup.bettor.one.keypair.publicKey,
+              bettorYesAta: testSetup.bettorATA.oneYes,
+              bettorNoAta: testSetup.bettorATA.oneNo,
+
+              chauMarket: testSetup.market.chauMarket,
+              marketVaultAccount: testSetup.market.chauMarketVault,
+              chauConfig: testSetup.config.chauConfig,
+
+              wagerAccount: testSetup.bettorAccounts.oneWager,
+              bettorProfile: testSetup.bettorAccounts.oneProfile,
+              bettorWalletAccount: testSetup.bettorAccounts.oneVault,
+
+              mintYes: testSetup.mint.yes,
+              mintNo: testSetup.mint.no,
+
+              systemProgram: SYSTEM_PROGRAM_ID,
+              associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .instruction();
+
+          await makeTransaction(
+            testSetup.client,
+            [ix],
+            [testSetup.bettor.one.keypair],
+            false
+          );
+
+          let bettorProfile = await fetchBettorProfile(
+            testSetup.bettor.one.program,
+            testSetup.bettorAccounts.oneProfile
+          );
+
+          console.log(
+            `Bettor has successfully fully claimed his amount the netProfite is ${bettorProfile.bettorNetProfit}`
+          );
+        }
+      } catch (error) {
+        throw new Error(`You got an error while claiming your reward`);
+      }
+    });
+
+    test("bettor two claim amountl claiming for his 10 shares of YES", async () => {
+      try {
+        let bettor_two_yes = await getAccount(
+          testSetup.client,
+          testSetup.bettorATA.twoYes
+        );
+
+        if (Number(bettor_two_yes.amount) != 0) {
+          let ix = await testSetup.bettor.one.program.methods
+            .claimBettorAmount(new BN(Number(bettor_two_yes.amount)))
+            .accountsStrict({
+              bettor: testSetup.bettor.two.keypair.publicKey,
+              bettorYesAta: testSetup.bettorATA.twoYes,
+              bettorNoAta: testSetup.bettorATA.twoNo,
+
+              chauMarket: testSetup.market.chauMarket,
+              marketVaultAccount: testSetup.market.chauMarketVault,
+              chauConfig: testSetup.config.chauConfig,
+
+              wagerAccount: testSetup.bettorAccounts.twoWager,
+              bettorProfile: testSetup.bettorAccounts.twoProfile,
+              bettorWalletAccount: testSetup.bettorAccounts.twoVault,
+
+              mintYes: testSetup.mint.yes,
+              mintNo: testSetup.mint.no,
+
+              systemProgram: SYSTEM_PROGRAM_ID,
+              associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .instruction();
+
+          await makeTransaction(
+            testSetup.client,
+            [ix],
+            [testSetup.bettor.two.keypair],
+            false
+          );
+
+          let bettorProfile = await fetchBettorProfile(
+            testSetup.bettor.two.program,
+            testSetup.bettorAccounts.oneProfile
+          );
+
+          console.log(
+            `Bettor has successfully fully claimed his amount the netProfite is ${bettorProfile.bettorNetProfit}`
+          );
+        }
+      } catch (error) {
+        throw new Error(`You got an error while claiming your reward`);
+      }
+    });
+  });
+
+  describe("admin withdraw profite", () => {
+    test("admin is taking profits", async () => {
+      try {
+        let ix = await testSetup.admin.one.program.methods
+          .adminWithdrawProfit()
+          .accountsStrict({
+            admin: testSetup.admin.one.keypair.publicKey,
+            chauConfig: testSetup.config.chauConfig,
 
             chauMarket: testSetup.market.chauMarket,
             marketVaultAccount: testSetup.market.chauMarketVault,
 
-            mintYes: testSetup.mint.yes,
-            mintNo: testSetup.mint.no,
+            treasuryAccount: testSetup.config.chauTreasury,
+            systemProgram: SYSTEM_PROGRAM_ID,
+          })
+          .instruction();
 
+        await makeTransaction(
+          testSetup.client,
+          [ix],
+          [testSetup.admin.one.keypair],
+          false
+        );
+
+        console.log(`successfully claimed the admin profit `);
+      } catch (error) {
+        throw new Error(
+          `You got an error while trying to withdraw funds ${error}`
+        );
+      }
+    });
+  });
+
+  describe("bettor withdraw profites", () => {
+    test("bettor taking his funds from his wallet", async () => {
+      try {
+        let ix = await testSetup.bettor.one.program.methods
+          .bettorWithdrawAmount()
+          .accountsStrict({
+            bettor: testSetup.bettor.one.keypair.publicKey,
+            chauMarket: testSetup.market.chauMarket,
             chauConfig: testSetup.config.chauConfig,
 
+            bettorProfile: testSetup.bettorAccounts.oneProfile,
+            bettorWalletAccount: testSetup.bettorAccounts.oneVault,
+
+            wagerAccount: testSetup.bettorAccounts.oneWager,
             systemProgram: SYSTEM_PROGRAM_ID,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
           })
           .instruction();
 
@@ -445,12 +1001,14 @@ describe("chaubet", () => {
           testSetup.client,
           [ix],
           [testSetup.bettor.one.keypair],
-          true
+          false
         );
 
-        console.log(`Yukataaaaa successfully bought outcome share 😭`);
+        console.log(`successfully claimed the bettor profit `);
       } catch (error) {
-        throw new Error(`You got an error while buying shares ${error}`);
+        throw new Error(
+          `You got an error while bettor is taking his funds from wallet ${error}`
+        );
       }
     });
   });

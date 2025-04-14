@@ -186,10 +186,6 @@ impl<'info> ClaimAmount<'info> {
     }
 
     fn update_state(&mut self, shares_amount: u64) -> Result<()> {
-        // update the fucking states
-        // - needed wager_account
-        // - bettor_profile
-        //
         // profite/loss = Winning Shares - [TotalSpent - Total Earned];
 
         let net_spent = self.wager_account.bet_amount_spent as i64
