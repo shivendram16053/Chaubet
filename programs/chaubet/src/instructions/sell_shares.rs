@@ -1,4 +1,7 @@
-use crate::{check_ban, check_zero, constant::*, decimal_convo, error::ChauError, state::*};
+use crate::{
+    check_ban, check_zero, constant::*, decimal_convo, error::ChauError, state::*,
+    utils::MarketStatus,
+};
 use anchor_lang::{
     prelude::*,
     solana_program::native_token::LAMPORTS_PER_SOL,

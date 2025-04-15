@@ -81,7 +81,8 @@ impl<'info> InitializeBettor<'info> {
         transfer(ctx, amount_deposite * LAMPORTS_PER_SOL)?;
 
         // update the bettor balance
-        self.bettor_profile
+        self.bettor_profile.balance = self
+            .bettor_profile
             .balance
             .checked_add(amount_deposite)
             .unwrap();

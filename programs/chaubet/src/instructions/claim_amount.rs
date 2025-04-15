@@ -10,7 +10,14 @@ use anchor_spl::{
 
 use rust_decimal::prelude::*;
 
-use crate::{check_ban, check_zero, constant::*, decimal_convo, error::*, state::*};
+use crate::{
+    check_ban, check_zero,
+    constant::*,
+    decimal_convo,
+    error::*,
+    state::*,
+    utils::{MarketOutcome, MarketStatus},
+};
 
 #[derive(Accounts)]
 pub struct ClaimAmount<'info> {

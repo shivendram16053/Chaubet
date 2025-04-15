@@ -11,7 +11,8 @@ use crate::{
     constant::{CHAU_CONFIG, MARKET, MARKET_VAULT, MINIMUM_LMSR_B, MINT_NO, MINT_YES},
     decimal_convo,
     error::ChauError,
-    state::{ChauConfig, ChauMarket, MarketOutcome, MarketStatus},
+    state::{ChauConfig, ChauMarket},
+    utils::{MarketOutcome, MarketStatus},
 };
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

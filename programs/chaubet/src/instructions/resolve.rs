@@ -1,6 +1,12 @@
 use anchor_lang::prelude::*;
 
-use crate::{admin_check, constant::*, error::ChauError, state::*};
+use crate::{
+    admin_check,
+    constant::*,
+    error::ChauError,
+    state::*,
+    utils::{MarketOutcome, MarketStatus},
+};
 
 #[derive(Accounts)]
 pub struct Resolve<'info> {

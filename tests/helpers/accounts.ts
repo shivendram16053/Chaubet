@@ -4,19 +4,25 @@ import { Chaubet } from "../../target/types/chaubet";
 import { BanksClient } from "solana-bankrun";
 import { TOKEN_PROGRAM_ID, unpackAccount } from "@solana/spl-token";
 
-export async function fetchProgramDerivedAccounts(
+export async function fetchChauConfig(
   program: Program<Chaubet>,
-  chauMarketPDA: anchor.web3.PublicKey,
-  chauConfigPDA: anchor.web3.PublicKey
+  chauConfig: anchor.web3.PublicKey
 ) {
   try {
-    return {
-      chauMarketAccount: await program.account.chauMarket.fetch(chauMarketPDA),
-      chauConfigAccount: await program.account.chauConfig.fetch(chauConfigPDA),
-    };
+    return await program.account.chauConfig.fetch(chauConfig);
   } catch (error) {
-    console.error(`Error fetching Program Derived Accounts (PDAs): ${error}`);
-    throw error;
+    throw Error(`U got an error while fetching chauConfig ${error}`);
+  }
+}
+
+export async function fetchChauMarket(
+  program: Program<Chaubet>,
+  chauMarket: anchor.web3.PublicKey
+) {
+  try {
+    return await program.account.chauMarket.fetch(chauMarket);
+  } catch (error) {
+    throw Error(`U got an error while fetching chauMarket ${error}`);
   }
 }
 

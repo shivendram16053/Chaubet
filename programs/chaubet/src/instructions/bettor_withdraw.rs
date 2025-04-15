@@ -1,6 +1,5 @@
 use anchor_lang::{
     prelude::*,
-    solana_program::native_token::LAMPORTS_PER_SOL,
     system_program::{transfer, Transfer},
 };
 

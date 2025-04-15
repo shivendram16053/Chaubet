@@ -14,15 +14,11 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 import {
   fetchBettorProfile,
-  fetchProgramDerivedAccounts,
+  fetchChauConfig,
   fetchWagerPDA,
   getAccount,
 } from "./helpers/accounts";
-import {
-  ComputeBudgetProgram,
-  PublicKey,
-  TransactionInstruction,
-} from "@solana/web3.js";
+import { ComputeBudgetProgram, TransactionInstruction } from "@solana/web3.js";
 
 describe("chaubet", () => {
   const testSetup: TestSetupType = {
@@ -145,16 +141,23 @@ describe("chaubet", () => {
                 })
                 .instruction();
 
-              let trxRes = await makeTransaction(
+              await makeTransaction(
                 testSetup.client,
                 [ix],
                 [testSetup.admin.one.keypair],
                 false
               );
 
-              console.log(
-                `The testcase by ${testCase.name} is passed 🥳 and res:- ${trxRes}`
+              let configAcc = await fetchChauConfig(
+                testSetup.admin.one.program,
+                testSetup.config.chauConfig
               );
+
+              const { fees, isInitialized, treasutyAmount } = configAcc;
+
+              expect(fees).toEqual(testCase.fees);
+              expect(isInitialized).toEqual(true);
+              expect(treasutyAmount.toNumber()).toEqual(0);
 
               break;
             }
@@ -281,6 +284,18 @@ describe("chaubet", () => {
                 false
               );
 
+              let bettorProfileAcc = await fetchBettorProfile(
+                testSetup.bettor.one.program,
+                testSetup.bettorAccounts.oneProfile
+              );
+              const { isBan, balance, bettorPubkey } = bettorProfileAcc;
+
+              expect(isBan).toEqual(false);
+              expect(balance.toNumber()).toEqual(bettorInfo.amount);
+              expect(bettorPubkey.toBase58()).toEqual(
+                testSetup.bettor.one.keypair.publicKey.toBase58()
+              );
+
               console.log(
                 `${bettorInfo.name} has successfully created his bettor profile 🥂`
               );
@@ -306,6 +321,18 @@ describe("chaubet", () => {
                 [ix],
                 [testSetup.bettor.two.keypair],
                 false
+              );
+
+              let bettorProfileAcc = await fetchBettorProfile(
+                testSetup.bettor.one.program,
+                testSetup.bettorAccounts.oneProfile
+              );
+              const { isBan, balance, bettorPubkey } = bettorProfileAcc;
+
+              expect(isBan).toEqual(false);
+              expect(balance.toNumber()).toEqual(bettorInfo.amount);
+              expect(bettorPubkey.toBase58()).toEqual(
+                testSetup.bettor.one.keypair.publicKey.toBase58()
               );
 
               console.log(
@@ -400,20 +427,6 @@ describe("chaubet", () => {
           [ix],
           [testSetup.admin.one.keypair],
           false
-        );
-
-        const accounts = await fetchProgramDerivedAccounts(
-          testSetup.admin.one.program,
-          testSetup.market.chauMarket,
-          testSetup.config.chauConfig
-        );
-
-        console.log(
-          `✨ ChauMarket details:- 1) marketName: ${
-            accounts.chauMarketAccount.marketName
-          } and 2)LMSR_B: ${accounts.chauMarketAccount.lsmrB.toNumber()} 3) The initialDeposite: ${
-            accounts.chauMarketAccount.intialDeposite
-          } ✨`
         );
 
         console.log(`market is successfully created by ${market.name} 🔥`);
@@ -559,18 +572,8 @@ describe("chaubet", () => {
                 testSetup.bettorAccounts.oneWager
               );
 
-              let chauMarketAcc = await fetchProgramDerivedAccounts(
-                testSetup.bettor.one.program,
-                testSetup.market.chauMarket,
-                testSetup.config.chauConfig
-              );
-
               console.log(
                 `✨ ${testInfo.name}:-  The wager Account destructuring 1) YES Shares:- ${wagerAcc.yesShares} 2) NO Shares:- ${wagerAcc.noShares} 3) Amount Spent ${wagerAcc.betAmountSpent} ✨`
-              );
-
-              console.log(
-                `✨ The ChauMarket account destructuring 1) Total YES Shares ${chauMarketAcc.chauMarketAccount.outcomeYesShares}  2)Total NoShares ${chauMarketAcc.chauMarketAccount.outcomeNoShares} `
               );
 
               break;
@@ -649,18 +652,8 @@ describe("chaubet", () => {
                 testSetup.bettorAccounts.twoWager
               );
 
-              let chauMarketAcc = await fetchProgramDerivedAccounts(
-                testSetup.bettor.two.program,
-                testSetup.market.chauMarket,
-                testSetup.config.chauConfig
-              );
-
               console.log(
                 `✨ ${testInfo.name}:-  The wager Account destructuring 1) YES Shares:- ${wagerAcc.yesShares} 2) NO Shares:- ${wagerAcc.noShares} 3) Amount Spent ${wagerAcc.betAmountSpent} ✨`
-              );
-
-              console.log(
-                `✨ The ChauMarket account destructuring 1) Total YES Shares ${chauMarketAcc.chauMarketAccount.outcomeYesShares}  2)Total NoShares ${chauMarketAcc.chauMarketAccount.outcomeNoShares} `
               );
 
               break;
@@ -737,18 +730,8 @@ describe("chaubet", () => {
                 testSetup.maliciousAccounts.wager
               );
 
-              let chauMarketAcc = await fetchProgramDerivedAccounts(
-                testSetup.malicious.program,
-                testSetup.market.chauMarket,
-                testSetup.config.chauConfig
-              );
-
               console.log(
                 `✨ ${testInfo.name}:-  The wager Account destructuring 1) YES Shares:- ${wagerAcc.yesShares} 2) NO Shares:- ${wagerAcc.noShares} 3) Amount Spent ${wagerAcc.betAmountSpent} ✨`
-              );
-
-              console.log(
-                `✨ The ChauMarket account destructuring 1) Total YES Shares ${chauMarketAcc.chauMarketAccount.outcomeYesShares}  2)Total NoShares ${chauMarketAcc.chauMarketAccount.outcomeNoShares} `
               );
 
               break;

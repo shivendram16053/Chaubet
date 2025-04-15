@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use super::MarketStatus;
+use crate::utils::{MarketOutcome, MarketStatus};
 
 #[account]
 #[derive(InitSpace)]
@@ -19,12 +19,4 @@ pub struct Wager {
 
     pub is_initialized: bool, // added this for safty check for reinitialization attackes
     pub bet_bump: u8,
-}
-
-#[derive(InitSpace, AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
-#[repr(u8)]
-pub enum MarketOutcome {
-    YES,
-    NO,
-    NotResolved,
 }

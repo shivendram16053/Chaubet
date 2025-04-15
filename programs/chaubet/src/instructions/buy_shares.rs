@@ -10,7 +10,14 @@ use anchor_spl::{
 
 use rust_decimal::prelude::{Decimal, *};
 
-use crate::{check_ban, check_zero, constant::*, decimal_convo, error::ChauError, state::*};
+use crate::{
+    check_ban, check_zero,
+    constant::*,
+    decimal_convo,
+    error::ChauError,
+    state::*,
+    utils::{MarketOutcome, MarketStatus},
+};
 
 #[derive(Accounts)]
 pub struct BuyShares<'info> {
