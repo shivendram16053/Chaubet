@@ -10,7 +10,7 @@ Chaubet is a decentralized prediction market based on LMSR (Logarithmic Market S
 On Chaubet, you can trade predictions related to crypto,politics,anime,movies turning your market insights into impactful strategies.These markets where specifically focused in Indian events.we ensure that every trade is fast, secure, and transparent, leveraging Solana's advanced infrastructure.
 You can also get engage with your fellow bettors for each given market. 
 
-## How Triad Works:-
+## How Chaubet Works:-
 1) A market is created based on a real-world event <br/>
 *Example*: Will Modi visit Manipur by the end of April 2025?
 
