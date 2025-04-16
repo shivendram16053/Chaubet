@@ -34,7 +34,7 @@ You can also get engage with your fellow bettors for each given market.
 - To automate and schedule data updates, we employ Tuk-Tuk, a Solana-native cron job scheduler. Tuk-Tuk triggers our Switchboard data feeds at regular intervals or specific times, ensuring timely resolution of market events.
 - We integrate the Grok API, provided by xAI, as the endpoint for our Switchboard oracles to fetch binary outcome data.
 
-### For more indepth Technical analasis vist our Chaubet Blog:- 
+### For more indepth Technical analysis vist our Chaubet Blog:- 
 [chaubet_notion](https://marvelous-thorium-112.notion.site/Chaubet-1bdc5b64461280cfb6efe749d16bf833)
 
 
