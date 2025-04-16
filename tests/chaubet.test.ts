@@ -1,7 +1,13 @@
 import { describe, test, beforeAll, expect } from "@jest/globals";
-import { InitConfigType, TestSetupType, TradeType } from "./helpers/types";
+import {
+  InitConfigType,
+  MetadataType,
+  TestSetupType,
+  TradeType,
+} from "./helpers/types";
 import { bankrunSetup } from "./helpers/setup";
 import {
+  createMetadata,
   getAllATA,
   getAllMint,
   getAllPDA,
@@ -18,7 +24,14 @@ import {
   fetchWagerPDA,
   getAccount,
 } from "./helpers/accounts";
-import { ComputeBudgetProgram, TransactionInstruction } from "@solana/web3.js";
+import {
+  ComputeBudgetProgram,
+  Keypair,
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from "@solana/web3.js";
+import { MPL_TOKEN_METADATA_PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
 
 describe("chaubet", () => {
   const testSetup: TestSetupType = {
@@ -51,7 +64,7 @@ describe("chaubet", () => {
       testSetup.malicious = bankrunRes.maliciousGuyIContext;
 
       const PDAAccounts = getAllPDA(
-        "will Modi go to manipur by the end of 2025 ?"
+        "Will Zoro defeat Mihawk in a one-on-one duel ?"
       );
 
       // bettor setup
@@ -387,9 +400,9 @@ describe("chaubet", () => {
       let market = {
         name: "Real Admin One",
         testArg: {
-          marketName: "will Modi go to manipur by the end of 2025 ?",
+          marketName: "Will Zoro defeat Mihawk in a one-on-one duel ?",
           marketDes:
-            "It’s unclear if Narendra Modi will visit Manipur by late 2025. Ethnic clashes between Meitei and Kuki groups since May 2023 have killed over 200 and displaced 50,000. Congress critics say Modi has ignored the crisis, despite global travels. He addressed it in August 2023 but hasn’t visited as of April 2025. A visit might show commitment, but his focus on diplomacy may delay it.",
+            "Zoro dreams of being the top swordsman, a title Mihawk holds. This asks if Zoro will win a fair duel, based on his progress and Mihawk’s skill.",
 
           lmsrB: 2000,
           deadLine: 8 * one_month,
@@ -399,14 +412,40 @@ describe("chaubet", () => {
       let currentUnix = (await testSetup.client.getClock()).unixTimestamp;
       let dead_line = new BN(market.testArg.deadLine + Number(currentUnix));
 
+      let metadataYesAcc = createMetadata(testSetup.mint.yes);
+      let metadataNoAcc = createMetadata(testSetup.mint.no);
+
+      let yesMetadata: MetadataType = {
+        name: "ZORO YES",
+        symbol: "ZY",
+        uri: "https://lavender-worthy-duck-16.mypinata.cloud/ipfs/bafkreiftb5xxo5ctzz3qefn2xzomx5eaxpuym36z2zddgo6guzvmc7u62m",
+      };
+
+      let noMetadata: MetadataType = {
+        name: "ZORO No",
+        symbol: "ZN",
+        uri: "https://lavender-worthy-duck-16.mypinata.cloud/ipfs/bafkreigoarqrb6cqpj6xvhiykxrpjv3zfxoznhcvht32j75boqkd7rcppm",
+      };
+
       try {
         let ix = await testSetup.admin.one.program.methods
-          .createMarket({
-            name: market.testArg.marketName,
-            description: market.testArg.marketDes,
-            lmsrB: new BN(market.testArg.lmsrB),
-            deadLine: dead_line,
-          })
+          .createMarket(
+            {
+              name: market.testArg.marketName,
+              description: market.testArg.marketDes,
+              lmsrB: new BN(market.testArg.lmsrB),
+              deadLine: dead_line,
+            },
+            {
+              yesName: yesMetadata.name,
+              yesSymbol: yesMetadata.symbol,
+              yesUri: yesMetadata.uri,
+
+              noName: noMetadata.name,
+              noSymbol: noMetadata.symbol,
+              noUri: noMetadata.uri,
+            }
+          )
           .accountsStrict({
             admin: testSetup.admin.one.keypair.publicKey,
             marketVaultAccount: testSetup.market.chauMarketVault,
@@ -417,6 +456,12 @@ describe("chaubet", () => {
             mintYes: testSetup.mint.yes,
             mintNo: testSetup.mint.no,
 
+            metadataYes: metadataYesAcc,
+            metadataNo: metadataNoAcc,
+
+            rent: SYSVAR_RENT_PUBKEY,
+
+            tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
             systemProgram: SYSTEM_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
           })

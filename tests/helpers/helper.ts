@@ -9,6 +9,7 @@ import {
   Clock,
   ProgramTestContext,
 } from "solana-bankrun";
+import { MPL_TOKEN_METADATA_PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
 
 export const getAllPDA = (marketName: string) => {
   const [chauConfig] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -213,6 +214,18 @@ const createATA = async (
   } catch (error) {
     throw new Error(`You got an error while creating an ATA ${error}`);
   }
+};
+
+export const createMetadata = (mint: anchor.web3.PublicKey) => {
+  // token_metadata program + mint_ program + "meta"
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("metadata"),
+      new anchor.web3.PublicKey(MPL_TOKEN_METADATA_PROGRAM_ID).toBuffer(),
+      mint.toBuffer(),
+    ],
+    new anchor.web3.PublicKey(MPL_TOKEN_METADATA_PROGRAM_ID)
+  )[0];
 };
 
 export const makeTransaction = async (

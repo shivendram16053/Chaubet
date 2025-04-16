@@ -3,7 +3,14 @@ use anchor_lang::{
     solana_program::native_token::LAMPORTS_PER_SOL,
     system_program::{transfer, Transfer},
 };
-use anchor_spl::token_interface::{Mint, TokenInterface};
+use anchor_spl::{
+    metadata::{
+        create_metadata_accounts_v3,
+        mpl_token_metadata::{instructions::*, types::DataV2, ID},
+        CreateMetadataAccountsV3, Metadata,
+    },
+    token_interface::{Mint, TokenInterface},
+};
 use rust_decimal::prelude::*;
 
 use crate::{
@@ -12,16 +19,8 @@ use crate::{
     decimal_convo,
     error::ChauError,
     state::{ChauConfig, ChauMarket},
-    utils::{MarketOutcome, MarketStatus},
+    utils::{InitTokenArg, MarketArg, MarketOutcome, MarketStatus},
 };
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct MarketArg {
-    pub name: String,
-    pub description: String,
-    pub lmsr_b: u64,
-    pub dead_line: i64,
-}
 
 #[derive(Accounts)]
 #[instruction(name:String)]
@@ -72,12 +71,27 @@ pub struct CreateMarket<'info> {
     )]
     pub market_vault_account: SystemAccount<'info>, // Where bettor desposites there wagers
 
+    /// CHECK: yes metadata
+    #[account(mut)]
+    pub metadata_yes: UncheckedAccount<'info>,
+
+    /// CHECK: no metadata
+    #[account(mut)]
+    pub metadata_no: UncheckedAccount<'info>,
+
+    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
+    pub token_metadata_program: Program<'info, Metadata>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
 impl<'info> CreateMarket<'info> {
-    pub fn save_market_data(&mut self, bump: CreateMarketBumps, arg: MarketArg) -> Result<()> {
+    pub fn save_market_data(
+        &mut self,
+        bump: CreateMarketBumps,
+        arg: MarketArg,
+        metadata_arg: InitTokenArg,
+    ) -> Result<()> {
         admin_check!(self);
 
         // Check: The Liquidity Parameter should pass the minimum threshold
@@ -112,6 +126,67 @@ impl<'info> CreateMarket<'info> {
 
         // Now call the method with the cloned data
         self.deposite_intial_amount(market_data)?;
+
+        Ok(())
+    }
+
+    fn create_metadata(&mut self, metadata_arg: InitTokenArg) -> Result<()> {
+        let seeds = &[CHAU_CONFIG, &[self.chau_config.config_bump]];
+        let signer_seeds = &[&seeds[..]];
+
+        let mint_yes_ctx = CpiContext::new_with_signer(
+            self.token_metadata_program.to_account_info(),
+            CreateMetadataAccountsV3 {
+                mint: self.mint_yes.to_account_info(),
+                payer: self.admin.to_account_info(),
+                update_authority: self.chau_config.to_account_info(),
+                mint_authority: self.chau_config.to_account_info(),
+                metadata: self.metadata_yes.to_account_info(),
+                system_program: self.system_program.to_account_info(),
+                rent: self.rent.to_account_info(),
+            },
+            signer_seeds,
+        );
+
+        let mint_yes_data = DataV2 {
+            name: metadata_arg.yes_name.clone(),
+            uri: metadata_arg.yes_uri.clone(),
+            symbol: metadata_arg.yes_symbol.clone(),
+            seller_fee_basis_points: 0,
+            creators: None,
+            uses: None,
+            collection: None,
+        };
+
+        // mint yes transaction
+        create_metadata_accounts_v3(mint_yes_ctx, mint_yes_data, true, true, None)?;
+
+        let mint_no_ctx = CpiContext::new_with_signer(
+            self.token_metadata_program.to_account_info(),
+            CreateMetadataAccountsV3 {
+                mint: self.mint_no.to_account_info(),
+                payer: self.admin.to_account_info(),
+                update_authority: self.chau_config.to_account_info(),
+                mint_authority: self.chau_config.to_account_info(),
+                metadata: self.metadata_no.to_account_info(),
+                system_program: self.system_program.to_account_info(),
+                rent: self.rent.to_account_info(),
+            },
+            signer_seeds,
+        );
+
+        let mint_no_data = DataV2 {
+            name: metadata_arg.no_name,
+            uri: metadata_arg.no_uri,
+            symbol: metadata_arg.no_symbol,
+            seller_fee_basis_points: 0,
+            creators: None,
+            uses: None,
+            collection: None,
+        };
+
+        // mint no transaction
+        create_metadata_accounts_v3(mint_no_ctx, mint_no_data, true, true, None)?;
 
         Ok(())
     }

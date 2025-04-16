@@ -21,6 +21,27 @@ pub enum MarketOutcome {
     NotResolved,
 }
 
+// ========= Structs ==========
+
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
+pub struct MarketArg {
+    pub name: String,
+    pub description: String,
+    pub lmsr_b: u64,
+    pub dead_line: i64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
+pub struct InitTokenArg {
+    pub yes_name: String,
+    pub yes_symbol: String,
+    pub yes_uri: String,
+
+    pub no_name: String,
+    pub no_symbol: String,
+    pub no_uri: String,
+}
+
 // =========== helper functions ==========
 
 impl ChauMarket {

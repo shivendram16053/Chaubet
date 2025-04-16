@@ -37,8 +37,13 @@ pub mod chaubet {
     }
 
     // Creats new market(only done by admin)
-    pub fn create_market(ctx: Context<CreateMarket>, arg: MarketArg) -> Result<()> {
-        ctx.accounts.save_market_data(ctx.bumps, arg)?;
+    pub fn create_market(
+        ctx: Context<CreateMarket>,
+        arg: MarketArg,
+        metadata_arg: InitTokenArg,
+    ) -> Result<()> {
+        ctx.accounts
+            .save_market_data(ctx.bumps, arg, metadata_arg)?;
         Ok(())
     }
 

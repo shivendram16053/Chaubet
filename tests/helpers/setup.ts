@@ -13,17 +13,31 @@ import {
 import { BankrunProvider } from "anchor-bankrun";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { IContextAccount } from "./types";
+import { MPL_TOKEN_METADATA_PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
+import fs from "fs";
+import path from "path";
 
 export const PROGRAM_ID = new anchor.web3.PublicKey(IDL.address);
 
+// Extend AddedProgram to include programData
+interface ExtendedAddedProgram {
+  name: string;
+  programId: anchor.web3.PublicKey;
+  programData?: Buffer;
+}
+
 export const bankrunSetup = async () => {
   try {
+    const mplProgramId = new anchor.web3.PublicKey(
+      "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+    );
+
     const context = await startAnchor(
       "",
       [
         {
-          name: "chaubet",
-          programId: PROGRAM_ID,
+          name: "mpl_token_metadata",
+          programId: mplProgramId,
         },
       ],
       [

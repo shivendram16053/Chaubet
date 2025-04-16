@@ -101,3 +101,9 @@ export type TradeType = {
   isBuy: boolean;
   bettor: number;
 };
+
+export type MetadataType = {
+  name: string;
+  symbol: string;
+  uri: string;
+};
