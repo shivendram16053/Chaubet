@@ -4,7 +4,7 @@ Chaubet is a decentralized prediction market based on LMSR (Logarithmic Market S
 
 <div>
 <img src="https://github.com/user-attachments/assets/21377e09-7d59-4ac0-9aaa-433057c11a01" alt="shakuni in a jacket" width="300" height="400">
-<img width="700" height="400" alt="Screenshot 2025-04-18 at 1 01 15 AM" src="https://github.com/user-attachments/assets/a1d50897-6d36-4b26-b16b-5b0a910cf947" />
+
 </div>
 
 
@@ -35,6 +35,8 @@ You can also get engage with your fellow bettors for each given market.
 - We use Switchboard, a flexible oracle solution, to create custom data feeds for Chaubet’s resolution data.
 - To automate and schedule data updates, we employ Tuk-Tuk, a Solana-native cron job scheduler. Tuk-Tuk triggers our Switchboard data feeds at regular intervals or specific times, ensuring timely resolution of market events.
 - We integrate the Grok API, provided by xAI, as the endpoint for our Switchboard oracles to fetch binary outcome data.
+
+  <img width="700" height="400" alt="Screenshot 2025-04-18 at 1 01 15 AM" src="https://github.com/user-attachments/assets/a1d50897-6d36-4b26-b16b-5b0a910cf947" />
 
 ## Features:-
 1) Onchain buying/trading outcome shares of a given market.
