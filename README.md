@@ -2,8 +2,10 @@
 
 Chaubet is a decentralized prediction market based on LMSR (Logarithmic Market Scoring Rule) and build on Solana, where you can place predictions on active markets. If your prediction is correct based on Grok AI resolution, you earn rewards based on the market price.
 
+<div>
 <img src="https://github.com/user-attachments/assets/21377e09-7d59-4ac0-9aaa-433057c11a01" alt="shakuni in a jacket" width="300" height="400">
-
+<img width="700" height="400" alt="Screenshot 2025-04-18 at 1 01 15 AM" src="https://github.com/user-attachments/assets/a1d50897-6d36-4b26-b16b-5b0a910cf947" />
+</div>
 
 
 # Overview
@@ -33,6 +35,26 @@ You can also get engage with your fellow bettors for each given market.
 - We use Switchboard, a flexible oracle solution, to create custom data feeds for Chaubet’s resolution data.
 - To automate and schedule data updates, we employ Tuk-Tuk, a Solana-native cron job scheduler. Tuk-Tuk triggers our Switchboard data feeds at regular intervals or specific times, ensuring timely resolution of market events.
 - We integrate the Grok API, provided by xAI, as the endpoint for our Switchboard oracles to fetch binary outcome data.
+
+## Features:-
+1) Onchain buying/trading outcome shares of a given market.
+2) Automated Outcome Resolution with Switchboard Oracle and Grok API.
+3) Cron Job Automation with Tuk-Tuk.
+4) Clean user friendly UI/UX.
+5) Chat application for each specific market.
+
+
+## Tech Stack:-
+- Blockchain: Solana
+- Smartcontract: Anchor Framework
+- Testing: Bankrun and Jest
+- Frontend: NextJs(modern frontend framework),Typescript(robust types),Motion(for sleek UI),websockets(for chat-application)
+
+  ## Progress:-
+  - Smartcontract ✅
+  - Testing ✅
+  - Frontend 🏗️
+
 
 ### For more indepth Technical analysis vist our Chaubet Blog:- 
 [chaubet_notion](https://marvelous-thorium-112.notion.site/Chaubet-1bdc5b64461280cfb6efe749d16bf833)
