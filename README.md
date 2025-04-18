@@ -58,6 +58,23 @@ You can also get engage with your fellow bettors for each given market.
   - Smartcontract ✅
   - Testing ✅
   - Frontend 🏗️
+ 
+  ## Roadmap
+  1) By the end of Q1 ✅
+     - complete the smart-contract
+     - complete the end to end testing
+       
+  2) By the end of Q2 🏗️
+     - Integrate Grok API and CRON JOB setup.
+
+  4) By the end of Q3 🏗️
+     - complete the frontend design
+     - Intergrate the Web Sockets
+     - Intergrate the Blinks
+
+    5) By the end of Q4 🏗️
+       - Deploy it on mainnet
+       - Onboard the users
 
 
 ### For more indepth Technical analysis vist our Chaubet Blog:- 
