@@ -65,6 +65,7 @@ You can also get engage with your fellow bettors for each given market.
      - complete the end to end testing
        
   2) By the end of Q2 🏗️
+     - New feature parlay betting. 
      - Integrate Grok API and CRON JOB setup.
 
   4) By the end of Q3 🏗️
