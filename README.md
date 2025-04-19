@@ -14,6 +14,21 @@ Chaubet is a decentralized prediction market based on LMSR (Logarithmic Market S
 On Chaubet, you can trade predictions related to crypto,politics,anime,movies turning your market insights into impactful strategies.These markets where specifically focused in Indian events.we ensure that every trade is fast, secure, and transparent, leveraging Solana's advanced infrastructure.
 You can also get engage with your fellow bettors for each given market. 
 
+## Problem:
+1) Traditional Order Book Model:-
+  - Most prediction markets use an order book model, where a matching engine connects buyers and sellers.
+  - In this model, users must place limit or market orders, and they often have to wait for a counterparty to match their order before a trade is executed.
+  - This can lead to low liquidity, longer wait times, and a less seamless trading experience, especially in less active markets.
+2) AMM(Automated Market Making) Model:-
+ - While AMMs solve the liquidity issue by allowing users to trade against a liquidity pool, they typically rely on constant product or bonding curve formulas, which 
+  aren't always ideal for binary outcomes like prediction markets.
+ - These models can introduce price slippage, especially during high-volume trades or in volatile markets.
+ - Additionally, impermanent loss and the need for external liquidity providers can complicate the user experience and market dynamics.
+
+## Solution: 
+We are adopting the Logarithmic Market Scoring Rule, a methodology developed by economist Robin Hanson and widely recognized as a benchmark for automated market makers in prediction markets. Distinct from traditional frameworks that depend on pairing buyers and sellers, LMSR enables us to facilitate continuous trading by serving as the counterparty to each transaction. This approach ensures dynamic price adjustments based on the volume of shares acquired for each potential outcome, thereby maintaining liquidity and encouraging accurate forecasting.
+
+    
 ## How Chaubet Works:-
 1) A market is created based on a real-world event <br/>
 *Example*: Will Modi visit Manipur by the end of April 2025?
