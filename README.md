@@ -1,4 +1,4 @@
-# Chaubet 🔮
+# Chaubet 🔮 (Won Solana Grant)
 
 Chaubet is a decentralized prediction market based on LMSR (Logarithmic Market Scoring Rule) and build on Solana, where you can place predictions on active markets. If your prediction is correct based on Grok AI resolution, you earn rewards based on the market price.
 
