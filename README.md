@@ -2,12 +2,16 @@
 
 Chaubet is a decentralized prediction market based on LMSR (Logarithmic Market Scoring Rule) and build on Solana, where you can place predictions on active markets. If your prediction is correct based on Grok AI resolution, you earn rewards based on the market price.
 
+
 [deployed link](https://solscan.io/account/ABUkyE3f3pyBeyS9YGtdKTHMKYHATSroW7S6u8JxNxaP?cluster=devnet)
 
 <div>
 <img src="https://github.com/user-attachments/assets/21377e09-7d59-4ac0-9aaa-433057c11a01" alt="shakuni in a jacket" width="300" height="400">
 
 </div>
+
+### For more indepth Technical analysis vist our Chaubet Blog:- 
+[chaubet_notion](https://marvelous-thorium-112.notion.site/Chaubet-1bdc5b64461280cfb6efe749d16bf833)
 
 
 # Overview
@@ -74,11 +78,5 @@ We are adopting the Logarithmic Market Scoring Rule, a methodology developed by 
   - Testing ✅
   - Frontend 🏗️
  
-
-
-
-### For more indepth Technical analysis vist our Chaubet Blog:- 
-[chaubet_notion](https://marvelous-thorium-112.notion.site/Chaubet-1bdc5b64461280cfb6efe749d16bf833)
-
 
 
