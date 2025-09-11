@@ -6,17 +6,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 
 const Navbar = () => {
     const pathname = usePathname()
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { publicKey } = useWallet()
 
     const navItems = [
         { label: "Features", href: "#features" },
         { label: "How It Works", href: "#how-it-works" },
         { label: "Markets", href: "#markets" },
         { label: "Docs", href: "#docs" }
+    ];
+    const navItems2 = [
+        { label: "Profile", href: `/profile` },
     ];
 
     return (
@@ -51,7 +56,20 @@ const Navbar = () => {
                     {/* Desktop CTA */}
                     <div className="hidden md:flex items-center space-x-4 cursor-pointer">
                         {pathname !== "/" ? (
-                           <WalletMultiButton/>
+                            <>
+                                <nav className="hidden md:flex items-center space-x-8">
+                                    {navItems2.map((item) => (
+                                        <a
+                                            key={item.label}
+                                            href={item.href}
+                                            className="text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {item.label}
+                                        </a>
+                                    ))}
+                                </nav>
+                                <WalletMultiButton />
+                            </>
                         ) : (
                             <Link href="/app">
                                 <Button variant="default" className="cursor-pointer">
@@ -60,6 +78,7 @@ const Navbar = () => {
                             </Link>
                         )}
                     </div>
+
 
 
                     {/* Mobile Menu Button */}

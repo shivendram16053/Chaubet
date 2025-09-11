@@ -10,7 +10,6 @@ export default function Home() {
   const router = useRouter();
   const { connected, publicKey } = useUser();
   useEffect(() => {
-    console.log(connected, publicKey);
     if (connected) {
       router.push("/app");
     }

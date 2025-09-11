@@ -38,7 +38,6 @@ export default function MarketList() {
     const fetchMarkets = async () => {
       try {
         const fetched = await program.account.chauMarket.all();
-        console.log("Fetched markets:", fetched);
 
         // Normalize and sort
         const normalized: Market[] = fetched

@@ -18,20 +18,20 @@ import * as anchor from "@coral-xyz/anchor"
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface MarketState {
-  active?: Record<string, never>; 
-  resolved?: Record<string, never>;
+    active?: Record<string, never>;
+    resolved?: Record<string, never>;
 }
 
 interface Market {
-  publicKey: string;
-  account: {
-    marketName: string;
-    description: string;
-    deadLine: number;
-    marketState: MarketState;
-    outcomeYesShares: number;
-    outcomeNoShares: number;
-  };
+    publicKey: string;
+    account: {
+        marketName: string;
+        description: string;
+        deadLine: number;
+        marketState: MarketState;
+        outcomeYesShares: number;
+        outcomeNoShares: number;
+    };
 }
 
 export default function EventPage() {
@@ -78,23 +78,6 @@ export default function EventPage() {
             return false;
         }
     };
-
-    useEffect(() => {
-        if (!walletKey || !program) return;
-
-        const fetchProfileStatus = async () => {
-            try {
-                const exists = await checkBettorProfile();
-                setHasBettorProfile(exists);
-                hasProfileFetched.current = true
-            } catch (error) {
-                console.error("Error checking bettor profile:", error);
-                setHasBettorProfile(false);
-            }
-        };
-
-        fetchProfileStatus();
-    }, [walletKey, program]);
 
     useEffect(() => {
         if (!program || !publicKeyParam || hasFetched.current) return;
@@ -233,7 +216,11 @@ export default function EventPage() {
     const handleBuy = async (side: "yes" | "no") => {
         if (!walletKey || !program || !validateTradeInput()) return;
 
-        if (hasBettorProfile === false) {
+        // Check bettor profile directly
+        const exists = await checkBettorProfile();
+        setHasBettorProfile(exists);
+
+        if (!exists && !showCreateBettorModal) {
             setShowCreateBettorModal(true);
             return;
         }
@@ -242,8 +229,10 @@ export default function EventPage() {
 
         try {
             const marketPubkey = new PublicKey(market!.publicKey);
-
-            const [chauConfig] = PublicKey.findProgramAddressSync([Buffer.from("admin_config")], program.programId);
+            const [chauConfig] = PublicKey.findProgramAddressSync(
+                [Buffer.from("admin_config")],
+                program.programId
+            );
 
             const [mintYes] = PublicKey.findProgramAddressSync(
                 [Buffer.from("mint_yes"), marketPubkey.toBuffer()],
@@ -254,11 +243,7 @@ export default function EventPage() {
                 program.programId
             );
             const [bettorProfile] = PublicKey.findProgramAddressSync(
-                [
-                    Buffer.from("bettor_profile"),
-                    walletKey.toBuffer(),
-                    chauConfig.toBuffer(),
-                ],
+                [Buffer.from("bettor_profile"), walletKey.toBuffer(), chauConfig.toBuffer()],
                 program.programId
             );
 
@@ -272,19 +257,11 @@ export default function EventPage() {
             );
 
             const [wagerAccount] = PublicKey.findProgramAddressSync(
-                [
-                    Buffer.from("bet"),
-                    chauMarket.toBuffer(),
-                    walletKey.toBuffer(),
-                ],
+                [Buffer.from("bet"), chauMarket.toBuffer(), walletKey.toBuffer()],
                 program.programId
             );
             const [bettorVaultAccount] = PublicKey.findProgramAddressSync(
-                [
-                    Buffer.from("bettor_wallet"),
-                    walletKey.toBuffer(),
-                    chauConfig.toBuffer(),
-                ],
+                [Buffer.from("bettor_wallet"), walletKey.toBuffer(), chauConfig.toBuffer()],
                 program.programId
             );
 
@@ -295,7 +272,6 @@ export default function EventPage() {
                 anchor.utils.token.TOKEN_PROGRAM_ID,
                 anchor.utils.token.ASSOCIATED_PROGRAM_ID
             );
-
             const bettorNoATA = await getAssociatedTokenAddress(
                 mintNo,
                 walletKey,
@@ -306,42 +282,73 @@ export default function EventPage() {
 
             const sharesAmount = new BN(Math.floor(parseFloat(amount)));
 
-            const tx = await program.methods
-                .buyShares(sharesAmount, side === "yes")
-                .accountsStrict({
-                    bettor: walletKey,
-                    bettorYesAccount: bettorYesATA,
-                    bettorNoAccount: bettorNoATA,
-                    bettorProfile,
-                    bettorWalletAccount: bettorVaultAccount,
-                    wagerAccount: wagerAccount,
-                    chauMarket: marketPubkey,
-                    marketVaultAccount: chauMarketVault,
-                    mintYes,
-                    mintNo,
-                    chauConfig,
-                    systemProgram: anchor.web3.SystemProgram.programId,
-                    tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-                    associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-                })
-                .rpc();
+            let tx;
+            if (side === "yes") {
+                tx = await program.methods
+                    .buyShares(sharesAmount, side === "yes")
+                    .accountsStrict({
+                        bettor: walletKey,
+                        bettorYesAccount: bettorYesATA,
+                        bettorNoAccount: bettorNoATA,
+                        bettorProfile,
+                        bettorWalletAccount: bettorVaultAccount,
+                        wagerAccount,
+                        chauMarket: marketPubkey,
+                        marketVaultAccount: chauMarketVault,
+                        mintYes,
+                        mintNo,
+                        chauConfig,
+                        systemProgram: anchor.web3.SystemProgram.programId,
+                        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+                        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+                    })
+                    .rpc();
+            } else {
+                tx = await program.methods
+                    .sellShares(sharesAmount, side === "no")
+                    .accountsStrict({
+                        bettor: walletKey,
+                        bettorYesAccount: bettorYesATA,
+                        bettorNoAccount: bettorNoATA,
+                        bettorProfile,
+                        bettorWalletAccount: bettorVaultAccount,
+                        wagerAccount,
+                        chauMarket: marketPubkey,
+                        marketVaultAccount: chauMarketVault,
+                        mintYes,
+                        mintNo,
+                        chauConfig,
+                        systemProgram: anchor.web3.SystemProgram.programId,
+                        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+                        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+                    })
+                    .rpc();
+            }
 
             toast.success("Trade executed successfully!");
 
-            setMarket(prev => prev ? {
-                ...prev,
-                account: {
-                    ...prev.account,
-                    outcomeYesShares: side === "yes" ? prev.account.outcomeYesShares + parseFloat(amount) : prev.account.outcomeYesShares,
-                    outcomeNoShares: side === "no" ? prev.account.outcomeNoShares + parseFloat(amount) : prev.account.outcomeNoShares,
-                }
-            } : prev);
+            setMarket(prev =>
+                prev
+                    ? {
+                        ...prev,
+                        account: {
+                            ...prev.account,
+                            outcomeYesShares:
+                                side === "yes"
+                                    ? prev.account.outcomeYesShares + parseFloat(amount)
+                                    : prev.account.outcomeYesShares,
+                            outcomeNoShares:
+                                side === "no"
+                                    ? prev.account.outcomeNoShares + parseFloat(amount)
+                                    : prev.account.outcomeNoShares,
+                        },
+                    }
+                    : prev
+            );
 
             setAmount("");
-
         } catch (error: unknown) {
             console.error(error);
-
             if (error instanceof Error) {
                 if (error.message.includes("insufficient funds")) {
                     toast.error("Insufficient funds for this trade");
@@ -353,11 +360,12 @@ export default function EventPage() {
             } else {
                 toast.error("Unexpected error occurred");
             }
-        }
-        finally {
+        } finally {
             setTransactionLoading(false);
         }
     };
+
+
 
     if (!program || !walletKey) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -410,6 +418,8 @@ export default function EventPage() {
     const totalShares = yesShares + noShares;
     const yesPrice = totalShares ? yesShares / totalShares : 0.5;
     const noPrice = totalShares ? noShares / totalShares : 0.5;
+    const safeYesPrice = yesPrice > 0 ? yesPrice : 1;
+    const safeNoPrice = noPrice > 0 ? noPrice : 1;
     const isOpen = !!marketState.active;
 
     const timeRemaining = deadLine ? Math.max(0, deadLine - Date.now() / 1000) : 0;
@@ -582,16 +592,17 @@ export default function EventPage() {
                         <div className="flex justify-between">
                             <span>You get:</span>
                             <span className="font-medium">
-                                ~{(parseFloat(amount) / (selectedSide === "yes" ? yesPrice : noPrice)).toFixed(2)} shares
+                                ~~{(parseFloat(amount) / (selectedSide === "yes" ? safeYesPrice : safeNoPrice)).toFixed(2)} shares
                             </span>
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Potential return:</span>
                             <span>
                                 {selectedSide === "yes"
-                                    ? `${((1 / yesPrice - 1) * 100).toFixed(1)}%`
-                                    : `${((1 / noPrice - 1) * 100).toFixed(1)}%`
+                                    ? `${((1 / safeYesPrice - 1) * 100).toFixed(1)}%`
+                                    : `${((1 / safeNoPrice - 1) * 100).toFixed(1)}%`
                                 }
+
                             </span>
                         </div>
                     </div>
