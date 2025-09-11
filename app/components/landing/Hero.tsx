@@ -22,7 +22,7 @@ const Hero = () => {
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            Join India's most sophisticated prediction market. Built on Solana with LMSR technology,
+            Join India&apos;s most sophisticated prediction market. Built on Solana with LMSR technology,
             where research and analysis drive rewards, not luck.
           </p>
 

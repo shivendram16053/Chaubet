@@ -12,7 +12,7 @@ const Footer = () => {
               <span className="text-accent">bet</span>
             </div>
             <p className="text-muted-foreground mb-6 max-w-md">
-              India's premier decentralized prediction market built on Solana. 
+              India&apos;s premier decentralized prediction market built on Solana. 
               Where research meets rewards.
             </p>
             <div className="flex space-x-4">

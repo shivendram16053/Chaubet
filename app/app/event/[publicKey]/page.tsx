@@ -8,14 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Clock, TrendingUp, Users, AlertCircle } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import dynamic from "next/dynamic";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import BN from "bn.js";
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 import * as anchor from "@coral-xyz/anchor"
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
+
+interface MarketState {
+    active?: any;
+    resolved?: any;
+}
 
 interface Market {
     publicKey: string;
@@ -23,7 +28,7 @@ interface Market {
         marketName: string;
         description: string;
         deadLine: number;
-        marketState: any;
+        marketState: MarketState;
         outcomeYesShares: number;
         outcomeNoShares: number;
     };
@@ -40,6 +45,7 @@ export default function EventPage() {
     const [amount, setAmount] = useState<string>("");
     const [selectedSide, setSelectedSide] = useState<"yes" | "no">("yes");
     const hasFetched = useRef(false);
+    const hasProfileFetched = useRef(false);
     const [timeFrame, setTimeFrame] = useState<'1h' | '24h' | '7d'>('24h');
     const [hasBettorProfile, setHasBettorProfile] = useState<boolean | null>(null);
     const [showCreateBettorModal, setShowCreateBettorModal] = useState(false);
@@ -48,7 +54,7 @@ export default function EventPage() {
     const [error, setError] = useState<string | null>(null);
 
     const checkBettorProfile = async () => {
-        if (!program || !walletKey) return false;
+        if (!program || !walletKey || hasProfileFetched.current) return false;
 
         const [chauConfig] = PublicKey.findProgramAddressSync(
             [Buffer.from("admin_config")],
@@ -68,6 +74,7 @@ export default function EventPage() {
             const profile = await program.account.bettor.fetch(bettorProfile);
             return !!profile;
         } catch (err) {
+            console.log(err)
             return false;
         }
     };
@@ -79,6 +86,7 @@ export default function EventPage() {
             try {
                 const exists = await checkBettorProfile();
                 setHasBettorProfile(exists);
+                hasProfileFetched.current = true
             } catch (error) {
                 console.error("Error checking bettor profile:", error);
                 setHasBettorProfile(false);
@@ -331,16 +339,22 @@ export default function EventPage() {
 
             setAmount("");
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            if (error.message?.includes("insufficient funds")) {
-                toast.error("Insufficient funds for this trade");
-            } else if (error.message?.includes("slippage")) {
-                toast.error("Price changed. Please try again.");
+
+            if (error instanceof Error) {
+                if (error.message.includes("insufficient funds")) {
+                    toast.error("Insufficient funds for this trade");
+                } else if (error.message.includes("slippage")) {
+                    toast.error("Price changed. Please try again.");
+                } else {
+                    toast.error("Trade failed. Please try again.");
+                }
             } else {
-                toast.error("Trade failed. Please try again.");
+                toast.error("Unexpected error occurred");
             }
-        } finally {
+        }
+        finally {
             setTransactionLoading(false);
         }
     };
