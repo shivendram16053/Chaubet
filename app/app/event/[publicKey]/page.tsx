@@ -18,20 +18,20 @@ import * as anchor from "@coral-xyz/anchor"
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface MarketState {
-    active?: any;
-    resolved?: any;
+  active?: Record<string, never>; 
+  resolved?: Record<string, never>;
 }
 
 interface Market {
-    publicKey: string;
-    account: {
-        marketName: string;
-        description: string;
-        deadLine: number;
-        marketState: MarketState;
-        outcomeYesShares: number;
-        outcomeNoShares: number;
-    };
+  publicKey: string;
+  account: {
+    marketName: string;
+    description: string;
+    deadLine: number;
+    marketState: MarketState;
+    outcomeYesShares: number;
+    outcomeNoShares: number;
+  };
 }
 
 export default function EventPage() {

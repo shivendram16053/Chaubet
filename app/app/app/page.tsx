@@ -8,9 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import Link from "next/link";
+import { PublicKey } from "@solana/web3.js";
+
+type MarketState = "active" | "resolved" | "unknown";
+
+interface Market {
+  publicKey: PublicKey;
+  account: {
+    marketName: string;
+    description: string;
+    deadLine: number;
+    marketState: MarketState;
+    outcomeYesShares: number;
+    outcomeNoShares: number;
+  };
+}
 
 export default function MarketList() {
-  const [markets, setMarkets] = useState<any[]>([]);
+  const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const { program } = useProgram();
   const { publicKey } = useWallet();
@@ -25,14 +40,28 @@ export default function MarketList() {
         const fetched = await program.account.chauMarket.all();
         console.log("Fetched markets:", fetched);
 
-        // Sort by remaining time (ascending)
-        const sortedMarkets = fetched.sort((a, b) => {
-          const remainingA = a.account.deadLine.toNumber() - Math.floor(Date.now() / 1000);
-          const remainingB = b.account.deadLine.toNumber() - Math.floor(Date.now() / 1000);
-          return remainingA - remainingB;
-        });
+        // Normalize and sort
+        const normalized: Market[] = fetched
+          .map((m) => ({
+            publicKey: m.publicKey,
+            account: {
+              marketName: m.account.marketName.replace(/\0/g, ""),
+              description: m.account.description,
+              deadLine: m.account.deadLine?.toNumber() ?? 0,
+              marketState:
+                m.account.marketState?.active !== undefined
+                  ? "active"
+                  : m.account.marketState?.resolved !== undefined
+                    ? "resolved"
+                    : "unknown" as MarketState,
+              outcomeYesShares: Number(m.account.outcomeYesShares) || 0,
+              outcomeNoShares: Number(m.account.outcomeNoShares) || 0,
+            },
+          }))
+          .sort((a, b) => a.account.deadLine - b.account.deadLine);
 
-        setMarkets(sortedMarkets);
+        setMarkets(normalized);
+
       } catch (error) {
         console.error("Error fetching markets:", error);
       } finally {
@@ -43,7 +72,6 @@ export default function MarketList() {
     hasFetched.current = true;
     fetchMarkets();
   }, [program]);
-
 
   if (!program || !publicKey) {
     return (
@@ -88,7 +116,6 @@ export default function MarketList() {
 
   return (
     <div className="mt-32 px-24 md:px-24 lg:px-52">
-      {/* Markets Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {markets.length === 0 && (
           <Card className="col-span-full text-center p-8 rounded-2xl border-dashed border-2">
@@ -99,43 +126,39 @@ export default function MarketList() {
         )}
 
         {markets.map((m) => {
-          const name = m.account.marketName.replace(/\0/g, "");
-          const description = m.account.description;
           const deadline = new Date(
-            m.account.deadLine.toNumber() * 1000
+            m.account.deadLine * 1000
           ).toLocaleString();
-
-          const statusKey = Object.keys(m.account.marketState)[0] || "unknown";
 
           return (
             <Link
               key={m.publicKey.toBase58()}
               href={`/event/${m.publicKey.toBase58()}`}
               rel="noopener noreferrer"
-              className=" rounded-2xl shadow-md border border-border 
-        bg-gradient-to-br from-background to-background 
-        hover:from-accent/5 hover:to-primary/5 
-        hover:border-primary/40 
-        hover:shadow-lg hover:shadow-primary/20
-        transition-all duration-300
-        flex flex-col h-full cursor-pointer"
+              className="rounded-2xl shadow-md border border-border 
+                bg-gradient-to-br from-background to-background 
+                hover:from-accent/5 hover:to-primary/5 
+                hover:border-primary/40 
+                hover:shadow-lg hover:shadow-primary/20
+                transition-all duration-300
+                flex flex-col h-full cursor-pointer"
             >
               <Card className="flex flex-col h-full">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg font-semibold truncate">
-                    {name}
+                    {m.account.marketName}
                   </CardTitle>
                   <Badge
-                    variant={statusKey === "open" ? "default" : "outline"}
+                    variant={m.account.marketState === "active" ? "default" : "outline"}
                     className="capitalize"
                   >
-                    {statusKey}
+                    {m.account.marketState}
                   </Badge>
                 </CardHeader>
                 <CardContent className="flex flex-col justify-between flex-1">
                   <div>
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                      {description}
+                      {m.account.description}
                     </p>
                     <div className="flex items-center justify-between text-sm mb-4">
                       <span className="font-medium">Deadline:</span>
@@ -143,7 +166,6 @@ export default function MarketList() {
                     </div>
                   </div>
 
-                  {/* Yes / No Buttons */}
                   <div className="flex gap-2 mt-auto">
                     <Link
                       href={`/event/${m.publicKey.toBase58()}`}
@@ -167,7 +189,6 @@ export default function MarketList() {
             </Link>
           );
         })}
-
       </div>
     </div>
   );

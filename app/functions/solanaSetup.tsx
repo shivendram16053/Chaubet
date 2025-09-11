@@ -14,7 +14,6 @@ export function useProgram(): {
 
   if (!wallet) return { program: null, provider: null };
 
-  //@ts-ignore
   const provider = new AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
