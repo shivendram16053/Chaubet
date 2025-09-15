@@ -285,7 +285,6 @@ export default function EventPage() {
             const provider = program.provider as anchor.AnchorProvider;
 
 
-            let txSig;
             const ix = await program.methods
                 .buyShares(sharesAmount, shareSide)
                 .accountsStrict({
@@ -312,10 +311,10 @@ export default function EventPage() {
 
             const tx = new Transaction().add(computeIx, ix);
 
-            txSig = await provider.sendAndConfirm(tx, []);
+            const txSig = await provider.sendAndConfirm(tx, []);
 
 
-            toast.success("Trade executed successfully!");
+            toast.success(`Trade executed successfully! ${txSig}`);
 
             setMarket(prev =>
                 prev
