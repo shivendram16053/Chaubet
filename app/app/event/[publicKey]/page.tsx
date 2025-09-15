@@ -281,11 +281,12 @@ export default function EventPage() {
             );
 
             const sharesAmount = new BN(Math.floor(parseFloat(amount)));
+            const shareSide = side ==="yes"?true:false;
 
             let tx;
             if (side === "yes") {
                 tx = await program.methods
-                    .buyShares(sharesAmount, side === "yes")
+                    .buyShares(sharesAmount, shareSide)
                     .accountsStrict({
                         bettor: walletKey,
                         bettorYesAccount: bettorYesATA,
@@ -305,7 +306,7 @@ export default function EventPage() {
                     .rpc();
             } else {
                 tx = await program.methods
-                    .sellShares(sharesAmount, side === "no")
+                    .sellShares(sharesAmount,shareSide)
                     .accountsStrict({
                         bettor: walletKey,
                         bettorYesAccount: bettorYesATA,
