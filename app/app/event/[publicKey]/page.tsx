@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Clock, TrendingUp, Users, AlertCircle } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import dynamic from "next/dynamic";
-import { PublicKey } from "@solana/web3.js";
+import { ComputeBudgetProgram, PublicKey, Transaction } from "@solana/web3.js";
 import { useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import BN from "bn.js";
@@ -281,50 +281,39 @@ export default function EventPage() {
             );
 
             const sharesAmount = new BN(Math.floor(parseFloat(amount)));
-            const shareSide = side ==="yes"?true:false;
+            const shareSide = side === "yes" ? true : false;
+            const provider = program.provider as anchor.AnchorProvider;
 
-            let tx;
-            if (side === "yes") {
-                tx = await program.methods
-                    .buyShares(sharesAmount, shareSide)
-                    .accountsStrict({
-                        bettor: walletKey,
-                        bettorYesAccount: bettorYesATA,
-                        bettorNoAccount: bettorNoATA,
-                        bettorProfile,
-                        bettorWalletAccount: bettorVaultAccount,
-                        wagerAccount,
-                        chauMarket: marketPubkey,
-                        marketVaultAccount: chauMarketVault,
-                        mintYes,
-                        mintNo,
-                        chauConfig,
-                        systemProgram: anchor.web3.SystemProgram.programId,
-                        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-                        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-                    })
-                    .rpc();
-            } else {
-                tx = await program.methods
-                    .sellShares(sharesAmount,shareSide)
-                    .accountsStrict({
-                        bettor: walletKey,
-                        bettorYesAccount: bettorYesATA,
-                        bettorNoAccount: bettorNoATA,
-                        bettorProfile,
-                        bettorWalletAccount: bettorVaultAccount,
-                        wagerAccount,
-                        chauMarket: marketPubkey,
-                        marketVaultAccount: chauMarketVault,
-                        mintYes,
-                        mintNo,
-                        chauConfig,
-                        systemProgram: anchor.web3.SystemProgram.programId,
-                        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-                        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-                    })
-                    .rpc();
-            }
+
+            let txSig;
+            const ix = await program.methods
+                .buyShares(sharesAmount, shareSide)
+                .accountsStrict({
+                    bettor: walletKey,
+                    bettorYesAccount: bettorYesATA,
+                    bettorNoAccount: bettorNoATA,
+                    bettorProfile,
+                    bettorWalletAccount: bettorVaultAccount,
+                    wagerAccount,
+                    chauMarket: marketPubkey,
+                    marketVaultAccount: chauMarketVault,
+                    mintYes,
+                    mintNo,
+                    chauConfig,
+                    systemProgram: anchor.web3.SystemProgram.programId,
+                    tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+                })
+                .instruction(); // build instruction, don’t send yet
+
+            const computeIx = ComputeBudgetProgram.setComputeUnitLimit({
+                units: 500_000,
+            });
+
+            const tx = new Transaction().add(computeIx, ix);
+
+            txSig = await provider.sendAndConfirm(tx, []);
+
 
             toast.success("Trade executed successfully!");
 

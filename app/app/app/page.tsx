@@ -59,6 +59,8 @@ export default function MarketList() {
           }))
           .sort((a, b) => a.account.deadLine - b.account.deadLine);
 
+          console.log(normalized)
+
         setMarkets(normalized);
 
       } catch (error) {

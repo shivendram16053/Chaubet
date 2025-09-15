@@ -15,7 +15,7 @@ import {
     Target,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -121,9 +121,29 @@ export default function ProfilePage() {
                 ],
                 program.programId
             );
+            const [bettorWallet] = PublicKey.findProgramAddressSync(
+                [
+                    Buffer.from("bettor_wallet"),
+                    walletKey.toBuffer(),
+                    chauConfig.toBuffer(),
+                ],
+                program.programId
+            );
+            const lamports = await program.provider.connection.getBalance(bettorWallet);
+
 
             // ----------------- Bettor -----------------
             const account = await program.account.bettor.fetch(bettorProfile);
+
+            setProfile({
+                bettorPubkey: account.bettorPubkey.toBase58(),
+                bettorName: account.bettorName || undefined,
+                balance: Number(lamports/LAMPORTS_PER_SOL),
+                bettorNetProfit: Number(account.bettorNetProfit),
+                isBan: account.isBan,
+            });
+
+
 
             setProfile({
                 bettorPubkey: account.bettorPubkey.toBase58(),
